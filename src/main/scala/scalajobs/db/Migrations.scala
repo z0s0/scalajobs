@@ -10,7 +10,7 @@ import zio.logging.Logging
 object Migrations {
   type Migrations = Has[Service]
 
-  type Env = Blocking with Logging with Clock
+  type Env = Blocking with Clock
 
   trait Service {
     def applyMigrations(): URIO[Env, Unit]
