@@ -1,3 +1,4 @@
 .idea
 target
 .bsp
+frontend/node_modules
