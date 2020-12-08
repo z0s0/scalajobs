@@ -29,6 +29,7 @@ final class VacanciesRouter(dao: VacancyDao.Service)
   ): EntityEncoder[Task, A] = jsonEncoderOf
 
   override def route: HttpRoutes[Task] = HttpRoutes.of[Task] {
-    case GET -> Root / "vacancies" => Ok(dao.list)
+    case GET -> Root / "vacancies" / UUIDVar(id) => Ok(dao.get(id))
+    case GET -> Root / "vacancies"               => Ok(dao.list)
   }
 }

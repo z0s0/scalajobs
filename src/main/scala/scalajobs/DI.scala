@@ -12,12 +12,15 @@ import scalajobs.db.Migrations
 import zio.ZLayer
 import zio.blocking.Blocking
 import zio.clock.Clock
-import zio.logging.Logging
+import zio.logging.slf4j.Slf4jLogger
+import zio.logging.{Logger, Logging}
 
 object DI {
+  val logging = Slf4jLogger.makeWithAnnotationsAsMdc(Nil)
+
   val live =
     (Configuration.allConfigs ++ ZLayer
-      .requires[Blocking with Logging with Clock]) >+>
+      .requires[Blocking with Logging with Clock] ++ logging) >+>
       Migrations.live >+>
       Migrations.afterMigrations >>>
       (DbConnection.transactorLive) >>>
