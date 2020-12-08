@@ -1,31 +1,21 @@
 package scalajobs.dao
 
+import java.util.UUID
+
 import scalajobs.configuration.DbConnection.DBTransactor
+import scalajobs.dao.impl.VacancyDaoImpl
 import scalajobs.model.Vacancy
+import zio.logging.Logging
 import zio.{Has, Task, ZLayer}
 
 object VacancyDao {
   type VacancyDao = Has[Service]
 
   trait Service {
-    def list: Task[Vector[String]]
+    def list: Task[Vector[Vacancy]]
+    def get(id: UUID): Task[Option[Vacancy]]
   }
 
-  val live: ZLayer[DBTransactor, Throwable, VacancyDao] =
-    ZLayer.fromService { tr =>
-      import doobie._
-      import doobie.implicits._
-      import zio.interop.catz._
-
-      new Service {
-        override def list: Task[Vector[String]] = {
-          val kek = sql"""select description from vacancies"""
-            .query[String]
-            .to[Vector]
-            .transact(tr)
-
-          Task.succeed(Vector("pidor", "pider", "raul"))
-        }
-      }
-    }
+  val live: ZLayer[DBTransactor with Logging, Throwable, VacancyDao] =
+    ZLayer.fromService(new VacancyDaoImpl(_))
 }

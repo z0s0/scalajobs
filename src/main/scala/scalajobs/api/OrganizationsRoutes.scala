@@ -9,8 +9,9 @@ import org.http4s.dsl.Http4sDsl._
 import org.http4s.{EntityDecoder, EntityEncoder, HttpRoutes}
 import zio._
 import zio.interop.catz._
-import org.http4s.{EntityDecoder, EntityEncoder, HttpRoutes}
-import io.circe.generic.auto._
+import org.http4s.HttpRoutes
+import scalajobs.model.Organization._
+
 import scalajobs.dao.OrganizationDao
 
 object OrganizationsRoutes {
@@ -27,11 +28,14 @@ object OrganizationsRoutes {
 final class OrganizationsRouter(dao: OrganizationDao.Service)
     extends Http4sDsl[Task]
     with OrganizationsRoutes.Service {
+
   implicit def circeJsonEncoder[A](
-    implicit decoder: Encoder[A]
+    implicit encoder: Encoder[A]
   ): EntityEncoder[Task, A] = jsonEncoderOf
 
   override def route: HttpRoutes[Task] = HttpRoutes.of[Task] {
     case GET -> Root / "organizations" => Ok(dao.list)
+
+    case GET -> Root / "organizations" / UUIDVar(id) => Ok(dao.get(id))
   }
 }

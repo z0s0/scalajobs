@@ -1,7 +1,9 @@
 package scalajobs.dao
 
-import doobie.util.transactor.Transactor
+import java.util.UUID
+
 import scalajobs.configuration.DbConnection.DBTransactor
+import scalajobs.dao.impl.OrganizationDaoImpl
 import scalajobs.model.Organization
 import zio.{Has, Task, ZLayer}
 
@@ -9,26 +11,11 @@ object OrganizationDao {
   type OrganizationDao = Has[Service]
 
   trait Service {
-    def list: Task[Vector[String]]
+    def list: Task[Vector[Organization]]
+    def get(id: UUID): Task[Option[Organization]]
   }
 
   val live: ZLayer[DBTransactor, Throwable, OrganizationDao] =
-    ZLayer.fromService { tr =>
-      new Service {
-        import doobie._
-        import doobie.implicits._
-        import doobie.postgres.implicits._
-        import zio.interop.catz._
-
-        override def list: Task[Vector[String]] = {
-          val action = sql"""select name from organizations"""
-            .query[String]
-            .to[Vector]
-            .transact(tr)
-
-          action
-        }
-      }
-    }
+    ZLayer.fromService(new OrganizationDaoImpl(_))
 
 }

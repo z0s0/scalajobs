@@ -14,7 +14,6 @@ import scalajobs.configuration.Configuration.AllConfigs
 import zio.blocking.Blocking
 import zio.clock.Clock
 import zio.interop.catz.implicits.ioTimer
-import zio.logging.Logging
 import zio.logging.slf4j.Slf4jLogger
 
 object Main {
@@ -25,8 +24,6 @@ object Main {
       vR <- ZIO.access[VacanciesRoutes](_.get.route)
       oR <- ZIO.access[OrganizationsRoutes](_.get.route)
       httpApp = Router("/api/v1" -> vR.combineK(oR)).orNotFound
-      _ <- UIO(println(httpApp))
-
       _ <- ZIO.runtime[AppEnv].flatMap { implicit rts =>
         BlazeServerBuilder[Task]
           .bindHttp(apiConf.port, apiConf.endpoint)

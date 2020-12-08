@@ -3,11 +3,9 @@ package scalajobs.configuration
 import cats.effect.Blocker
 import doobie.hikari.HikariTransactor
 import doobie.util.transactor.Transactor
-import scalajobs.db.Migrations
-import scalajobs.db.Migrations.{Env, Migrations, WithMigrations}
 import zio.blocking.{Blocking, blocking}
 import zio.clock.Clock
-import zio.{Has, Managed, Task, URLayer, ZIO, ZLayer}
+import zio.{Has, Managed, Task, ZIO, ZLayer}
 
 import scala.concurrent.ExecutionContext
 import zio.interop.catz._
@@ -42,10 +40,4 @@ object DbConnection {
       blockingEC <- blocking { ZIO.descriptor.map(_.executor.asEC) }.toManaged_
       transactor <- mkTransactor(conf, connectEC, blockingEC)
     } yield transactor)
-
-//  val live: ZLayer[Deps with Has[DbConfig] with Env with Migrations,
-//                   Throwable,
-//                   DBTransactor] =
-//    (ZLayer
-//      .requires[Deps] ++ Migrations.live >>> Migrations.afterMigrations) >>> transactorLive
 }
