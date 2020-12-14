@@ -9,6 +9,7 @@ import io.circe.generic.auto._
 import zio.interop.catz._
 import org.http4s.circe._
 import scalajobs.dao.VacancyDao
+import scalajobs.model.VacancyFilter
 
 object VacanciesRoutes {
   type VacanciesRoutes = Has[Service]
@@ -30,6 +31,27 @@ final class VacanciesRouter(dao: VacancyDao.Service)
 
   override def route: HttpRoutes[Task] = HttpRoutes.of[Task] {
     case GET -> Root / "vacancies" / UUIDVar(id) => Ok(dao.get(id))
-    case GET -> Root / "vacancies"               => Ok(dao.list)
+    case GET -> Root / "vacancies" :? salaryFrom(salaryFrom) +& salaryTo(
+          salaryTo
+        ) => {
+      // TODO make generic and look ok
+      val filters = List[VacancyFilter]()
+      val withSalaryFrom =
+        if (salaryFrom.nonEmpty)
+          VacancyFilter.SalaryFrom(salaryFrom.get) :: filters
+        else
+          filters
+
+      val withSalaryTo =
+        if (salaryTo.nonEmpty)
+          VacancyFilter.SalaryTo(salaryTo.get) :: withSalaryFrom
+        else
+          withSalaryFrom
+
+      Ok(dao.list(withSalaryTo))
+    }
   }
+
+  object salaryFrom extends OptionalQueryParamDecoderMatcher[Int]("salaryFrom")
+  object salaryTo extends OptionalQueryParamDecoderMatcher[Int]("salaryTo")
 }

@@ -45,8 +45,8 @@ object ProjectConfig {
   val dbDeps = Seq(
     "org.postgresql" % "postgresql" % versions.postgresql,
     "org.flywaydb" % "flyway-core" % versions.flyway,
-    "com.dimafeng" %% "testcontainers-scala-scalatest" % versions.testcontainers % Test,
-    "com.dimafeng" %% "testcontainers-scala-postgresql" % versions.testcontainers % Test
+    "org.testcontainers" % "testcontainers" % "1.15.0-rc2" % Test,
+    "org.testcontainers" % "postgresql" % "1.15.0-rc2" % Test
   )
   val doobieDeps = Seq(
     "org.tpolecat" %% "doobie-core" % versions.doobie,
