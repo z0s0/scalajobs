@@ -23,7 +23,7 @@ object DI {
       .requires[Blocking with Logging with Clock] ++ logging) >+>
       Migrations.live >+>
       Migrations.afterMigrations >>>
-      (DbConnection.transactorLive) >>>
+      (DbConnection.transactorLive ++ logging) >>>
       (VacancyDao.live ++ OrganizationDao.live) >>>
       (VacanciesRoutes.live ++ OrganizationsRoutes.live ++ Configuration.allConfigs)
 
