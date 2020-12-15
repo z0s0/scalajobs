@@ -51,9 +51,11 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
 
     val sql = filters.foldLeft(baseSql) {
       case (acc, VacancyFilter.SalaryTo(amount)) =>
-        acc ++ fr"AND salary_to <= $amount"
+        acc ++ fr"AND v.salary_to <= $amount"
       case (acc, VacancyFilter.SalaryFrom(amount)) =>
-        acc ++ fr"AND salary_from >= $amount"
+        acc ++ fr"AND v.salary_from >= $amount"
+      case (acc, VacancyFilter.Actual(flag)) =>
+        if (flag) acc ++ fr"AND v.expires_at > NOW()" else acc
     }
 
     sql
