@@ -5,7 +5,13 @@ import java.util.UUID
 
 import doobie.util.transactor.Transactor
 import scalajobs.dao.VacancyDao
-import scalajobs.model.{Currency, OfficePresence, Vacancy, VacancyFilter}
+import scalajobs.model.{
+  Currency,
+  OfficePresence,
+  Organization,
+  Vacancy,
+  VacancyFilter
+}
 import zio.Task
 import doobie._
 import doobie.implicits._
@@ -18,19 +24,20 @@ import scalajobs.dao.impl.VacancyDaoImpl.VacancyRow
 object VacancyDaoImpl {
   final case class VacancyRow(id: UUID,
                               description: String,
-//                              organizationId: UUID,
                               salaryFrom: Int,
                               salaryTo: Int,
                               currency: String,
                               expiresAt: LocalDateTime,
                               contactEmail: String,
                               link: String,
-                              officePresence: String) {
+                              officePresence: String,
+                              organizationName: String,
+                              organizationId: UUID) {
     def toVacancy: Vacancy =
       Vacancy(
         id = Some(id),
         description = description,
-        organizationId = UUID.randomUUID(),
+        organization = Organization(id = Some(organizationId), organizationName),
         salaryFrom = salaryFrom,
         salaryTo = salaryTo,
         currency = Currency.fromString(currency),
@@ -43,11 +50,7 @@ object VacancyDaoImpl {
 }
 final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
   override def list(filters: List[VacancyFilter]): Task[Vector[Vacancy]] = {
-    val baseSql = sql"""
-         SELECT v.id, v.description, v.salary_from, v.salary_to, v.currency, v.expires_at, v.contact_email, v.link, v.office_presence
-         FROM vacancies v 
-         WHERE 1 = 1
-       """
+    val baseSql = selectVacancy() ++ fr"WHERE 1 = 1"
 
     val sql = filters.foldLeft(baseSql) {
       case (acc, VacancyFilter.SalaryTo(amount)) =>
@@ -66,15 +69,27 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
   }
 
   override def get(id: UUID): Task[Option[Vacancy]] = {
-    sql"""
-       select id, description, organization_id, salary_from, salary_to, currency, expires_at, contact_email, link, office_presence
-       from vacancies
-       where id = $id
-       """
+    (selectVacancy() ++ fr"WHERE v.id = $id")
       .query[VacancyRow]
       .option
       .map(_.map(_.toVacancy))
       .transact(tr)
   }
 
+  private def selectVacancy(): Fragment =
+    sql"""
+         SELECT v.id,
+                v.description,
+                v.salary_from,
+                v.salary_to,
+                v.currency,
+                v.expires_at,
+                v.contact_email,
+                v.link,
+                v.office_presence, 
+                o.name,  
+                o.id
+         FROM vacancies v 
+         JOIN organizations o ON v.organization_id = o.id
+       """
 }

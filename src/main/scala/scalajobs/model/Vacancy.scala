@@ -4,7 +4,7 @@ import java.util.UUID
 import java.time.LocalDateTime
 import io.circe.{Encoder, Decoder}
 import io.circe.syntax.EncoderOps
-import io.circe.generic.semiauto.deriveDecoder
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 sealed trait Currency
 object Currency {
@@ -61,9 +61,12 @@ object OfficePresence {
     }
 }
 
+object Vacancy {
+  implicit val encoder: Encoder[Vacancy] = deriveEncoder
+}
 final case class Vacancy(id: Option[UUID],
                          description: String,
-                         organizationId: UUID,
+                         organization: Organization,
                          salaryFrom: Int,
                          salaryTo: Int,
                          currency: Currency,

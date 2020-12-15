@@ -10,6 +10,7 @@ import zio.interop.catz._
 import org.http4s.implicits._
 import cats.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
+import org.slf4j.LoggerFactory
 import scalajobs.configuration.Configuration.AllConfigs
 import zio.blocking.Blocking
 import zio.clock.Clock
@@ -17,6 +18,8 @@ import zio.interop.catz.implicits.ioTimer
 import zio.logging.slf4j.Slf4jLogger
 
 object Main {
+  private val log = LoggerFactory.getLogger("RuntimeReporter")
+
   def main(args: Array[String]): Unit = {
     type AppEnv = VacanciesRoutes with OrganizationsRoutes with AllConfigs
     val program = for {
@@ -35,7 +38,7 @@ object Main {
     } yield ()
 
     val runtime = zio.Runtime.default.withReportFailure { cause =>
-      putStrLn(cause.toString)
+      if (cause.died) log.error(cause.prettyPrint)
     }
 
     val logging = Slf4jLogger.makeWithAnnotationsAsMdc(Nil)
