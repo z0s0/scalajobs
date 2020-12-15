@@ -33,7 +33,7 @@ final class VacanciesRouter(dao: VacancyDao.Service)
     case GET -> Root / "vacancies" / UUIDVar(id) => Ok(dao.get(id))
     case GET -> Root / "vacancies" :? salaryFrom(salaryFrom) +& salaryTo(
           salaryTo
-        ) => {
+        ) +& actual(actualFlag) => {
       // TODO make generic and look ok
       val filters = List[VacancyFilter]()
       val withSalaryFrom =
@@ -48,10 +48,17 @@ final class VacanciesRouter(dao: VacancyDao.Service)
         else
           withSalaryFrom
 
-      Ok(dao.list(withSalaryTo))
+      val withActual =
+        if (actualFlag.nonEmpty)
+          VacancyFilter.Actual(actualFlag.get) :: withSalaryTo
+        else
+          withSalaryTo
+
+      Ok(dao.list(withActual))
     }
   }
 
   object salaryFrom extends OptionalQueryParamDecoderMatcher[Int]("salaryFrom")
   object salaryTo extends OptionalQueryParamDecoderMatcher[Int]("salaryTo")
+  object actual extends OptionalQueryParamDecoderMatcher[Boolean]("actual")
 }

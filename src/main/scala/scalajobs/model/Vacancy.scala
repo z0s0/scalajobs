@@ -76,4 +76,5 @@ sealed trait VacancyFilter
 object VacancyFilter {
   final case class SalaryFrom(amount: Int) extends VacancyFilter
   final case class SalaryTo(amount: Int) extends VacancyFilter
+  final case class Actual(actual: Boolean) extends VacancyFilter
 }

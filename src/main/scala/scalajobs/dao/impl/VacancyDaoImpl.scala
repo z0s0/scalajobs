@@ -9,6 +9,7 @@ import scalajobs.model.{Currency, OfficePresence, Vacancy, VacancyFilter}
 import zio.Task
 import doobie._
 import doobie.implicits._
+import doobie.implicits.javatime._
 import zio.interop.catz._
 import doobie.postgres._
 import doobie.postgres.implicits._
@@ -21,7 +22,7 @@ object VacancyDaoImpl {
                               salaryFrom: Int,
                               salaryTo: Int,
                               currency: String,
-//                              expiresAt: String,
+                              expiresAt: LocalDateTime,
                               contactEmail: String,
                               link: String,
                               officePresence: String) {
@@ -33,7 +34,7 @@ object VacancyDaoImpl {
         salaryFrom = salaryFrom,
         salaryTo = salaryTo,
         currency = Currency.fromString(currency),
-        expiresAt = LocalDateTime.now(),
+        expiresAt = expiresAt,
         contactEmail = contactEmail,
         link = link,
         officePresence = OfficePresence.fromString(officePresence)
@@ -43,16 +44,18 @@ object VacancyDaoImpl {
 final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
   override def list(filters: List[VacancyFilter]): Task[Vector[Vacancy]] = {
     val baseSql = sql"""
-         SELECT v.id, v.description, v.salary_from, v.salary_to, v.currency, v.contact_email, v.link, v.office_presence
+         SELECT v.id, v.description, v.salary_from, v.salary_to, v.currency, v.expires_at, v.contact_email, v.link, v.office_presence
          FROM vacancies v 
          WHERE 1 = 1
        """
 
     val sql = filters.foldLeft(baseSql) {
       case (acc, VacancyFilter.SalaryTo(amount)) =>
-        acc ++ fr"AND salary_to <= $amount"
+        acc ++ fr"AND v.salary_to <= $amount"
       case (acc, VacancyFilter.SalaryFrom(amount)) =>
-        acc ++ fr"AND salary_from >= $amount"
+        acc ++ fr"AND v.salary_from >= $amount"
+      case (acc, VacancyFilter.Actual(flag)) =>
+        if (flag) acc ++ fr"AND v.expires_at > NOW()" else acc
     }
 
     sql
