@@ -13,6 +13,8 @@ object ProjectConfig {
     val interopCats = "2.2.0.1"
     val `zio-config` = "1.0.0-RC27"
     val `zio-logging` = "0.5.2"
+    val logback = "1.2.3"
+    val slf4j = "1.7.30"
   }
 
   val confDeps = Seq(
@@ -55,11 +57,17 @@ object ProjectConfig {
     "org.tpolecat" %% "doobie-hikari" % versions.doobie
   )
 
+  val logDependencies = Seq(
+    "ch.qos.logback" % "logback-classic" % versions.logback,
+    "org.slf4j" % "slf4j-api" % versions.slf4j
+  )
+
   val deps =
     zioDeps ++
       http4sDeps ++
       dbDeps ++
       doobieDeps ++
       confDeps ++
-      circeDeps
+      circeDeps ++
+      logDependencies
 }
