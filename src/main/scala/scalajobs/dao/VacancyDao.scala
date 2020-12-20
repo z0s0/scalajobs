@@ -14,6 +14,7 @@ object VacancyDao {
   trait Service {
     def list(filters: List[VacancyFilter]): Task[Vector[Vacancy]]
     def get(id: UUID): Task[Option[Vacancy]]
+    def create(vacancy: Vacancy): Task[Option[Vacancy]]
   }
 
   val live: ZLayer[DBTransactor with Logging, Throwable, VacancyDao] =

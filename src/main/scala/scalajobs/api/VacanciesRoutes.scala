@@ -3,13 +3,13 @@ package scalajobs.api
 import io.circe.Encoder
 import org.http4s.{EntityEncoder, HttpRoutes}
 import org.http4s.dsl.Http4sDsl
-import scalajobs.dao.VacancyDao.VacancyDao
 import zio.{Has, Task, URLayer, ZLayer}
 import io.circe.generic.auto._
 import zio.interop.catz._
 import org.http4s.circe._
-import scalajobs.dao.VacancyDao
 import scalajobs.model.VacancyFilter
+import scalajobs.service.VacancyService
+import scalajobs.service.VacancyService.VacancyService
 
 object VacanciesRoutes {
   type VacanciesRoutes = Has[Service]
@@ -18,11 +18,11 @@ object VacanciesRoutes {
     def route: HttpRoutes[Task]
   }
 
-  val live: URLayer[VacancyDao, VacanciesRoutes] =
+  val live: URLayer[VacancyService, VacanciesRoutes] =
     ZLayer.fromService(new VacanciesRouter(_))
 }
 
-final class VacanciesRouter(dao: VacancyDao.Service)
+final class VacanciesRouter(srv: VacancyService.Service)
     extends Http4sDsl[Task]
     with VacanciesRoutes.Service {
   implicit def circeJsonEncoder[A](
@@ -30,7 +30,12 @@ final class VacanciesRouter(dao: VacancyDao.Service)
   ): EntityEncoder[Task, A] = jsonEncoderOf
 
   override def route: HttpRoutes[Task] = HttpRoutes.of[Task] {
-    case GET -> Root / "vacancies" / UUIDVar(id) => Ok(dao.get(id))
+    case GET -> Root / "vacancies" / UUIDVar(id) =>
+      srv.get(id).flatMap {
+        case Some(value) => Ok(value)
+        case None        => NotFound("vacancy does not exist")
+      }
+
     case GET -> Root / "vacancies" :? salaryFrom(salaryFrom) +& salaryTo(
           salaryTo
         ) +& actual(actualFlag) => {
@@ -54,8 +59,11 @@ final class VacanciesRouter(dao: VacancyDao.Service)
         else
           withSalaryTo
 
-      Ok(dao.list(withActual))
+      Ok(srv.list(withActual))
     }
+
+    case req @ POST -> Root / "vacancies" =>
+      Ok()
   }
 
   object salaryFrom extends OptionalQueryParamDecoderMatcher[Int]("salaryFrom")

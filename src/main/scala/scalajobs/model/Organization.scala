@@ -11,3 +11,11 @@ object Organization {
 }
 
 final case class Organization(id: Option[UUID], name: String)
+
+sealed trait GetOrganizationResponse
+
+object GetOrganizationResponse {
+  final case class Found(organization: Organization)
+      extends GetOrganizationResponse
+  final object NotFound extends GetOrganizationResponse
+}
