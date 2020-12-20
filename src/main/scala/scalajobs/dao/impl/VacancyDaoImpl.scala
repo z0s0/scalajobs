@@ -76,6 +76,20 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
       .transact(tr)
   }
 
+  override def create(vacancy: Vacancy) = {
+
+    sql"""
+        INSERT INTO vacancies(
+          description, 
+           
+        ) VALUES ();  
+      """
+      .query[VacancyRow]
+      .option
+      .map(_.map(_.toVacancy))
+      .transact(tr)
+  }
+
   private def selectVacancy(): Fragment =
     sql"""
          SELECT v.id,
