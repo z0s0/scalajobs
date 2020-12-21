@@ -1,16 +1,21 @@
 package scalajobs.service
 
+import java.time.LocalDateTime
 import java.util.UUID
 
 import scalajobs.cache.VacancyCache
 import scalajobs.cache.VacancyCache.VacanciesCache
 import scalajobs.dao.VacancyDao
 import scalajobs.dao.VacancyDao.VacancyDao
+import scalajobs.model.dbParams.VacancyDbParams
+import scalajobs.model.form.VacancyForm
 import scalajobs.model.{
   CreateVacancyResponse,
+  Currency,
+  OfficePresence,
+  Organization,
   Vacancy,
-  VacancyFilter,
-  VacancyParams
+  VacancyFilter
 }
 import zio.{Has, Task, ZLayer}
 
@@ -20,7 +25,7 @@ object VacancyService {
   trait Service {
     def get(id: UUID): Task[Option[Vacancy]]
     def list(filters: List[VacancyFilter]): Task[Vector[Vacancy]]
-    def create(params: VacancyParams): Task[CreateVacancyResponse]
+    def create(params: VacancyForm): Task[CreateVacancyResponse]
   }
 
   type Dependencies = VacancyDao with VacanciesCache
@@ -41,8 +46,26 @@ object VacancyService {
           dao.list(filters)
 
         override def create(
-          params: VacancyParams
-        ): Task[CreateVacancyResponse] = ???
+          params: VacancyForm
+        ): Task[CreateVacancyResponse] = {
+          params match {
+            case VacancyForm(
+                None,
+                Some(desc),
+                Some(orgId),
+                Some(salaryFrom),
+                Some(salaryTo),
+                ) =>
+              dao
+                .create(VacancyDbParams(desc, salaryFrom, salaryTo, orgId))
+                .flatMap {
+                  case Some(vacancy) =>
+                    Task.succeed(CreateVacancyResponse.Created(vacancy))
+                  case None => Task.succeed(CreateVacancyResponse.Invalid)
+                }
+            case _ => Task.succeed(CreateVacancyResponse.Invalid)
+          }
+        }
       }
     }
 

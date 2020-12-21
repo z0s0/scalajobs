@@ -1,13 +1,14 @@
 package scalajobs.api
 
-import io.circe.Encoder
-import org.http4s.{EntityEncoder, HttpRoutes}
+import io.circe.{Decoder, Encoder}
+import org.http4s.{EntityDecoder, EntityEncoder, HttpRoutes}
 import org.http4s.dsl.Http4sDsl
 import zio.{Has, Task, URLayer, ZLayer}
 import io.circe.generic.auto._
 import zio.interop.catz._
 import org.http4s.circe._
-import scalajobs.model.VacancyFilter
+import scalajobs.model.form.VacancyForm
+import scalajobs.model.{CreateVacancyResponse, VacancyFilter}
 import scalajobs.service.VacancyService
 import scalajobs.service.VacancyService.VacancyService
 
@@ -25,9 +26,10 @@ object VacanciesRoutes {
 final class VacanciesRouter(srv: VacancyService.Service)
     extends Http4sDsl[Task]
     with VacanciesRoutes.Service {
-  implicit def circeJsonEncoder[A](
-    implicit decoder: Encoder[A]
-  ): EntityEncoder[Task, A] = jsonEncoderOf
+
+  implicit def circeJsonDecoder[A: Decoder]: EntityDecoder[Task, A] = jsonOf
+  implicit def circeJsonEncoder[A: Encoder]: EntityEncoder[Task, A] =
+    jsonEncoderOf
 
   override def route: HttpRoutes[Task] = HttpRoutes.of[Task] {
     case GET -> Root / "vacancies" / UUIDVar(id) =>
@@ -63,7 +65,12 @@ final class VacanciesRouter(srv: VacancyService.Service)
     }
 
     case req @ POST -> Root / "vacancies" =>
-      Ok()
+      req.decode[VacancyForm] { params =>
+        srv.create(params).flatMap {
+          case CreateVacancyResponse.Created(vacancy) => Created(vacancy)
+          case CreateVacancyResponse.Invalid          => UnprocessableEntity()
+        }
+      }
   }
 
   object salaryFrom extends OptionalQueryParamDecoderMatcher[Int]("salaryFrom")
