@@ -6,9 +6,9 @@ import io.circe.syntax.EncoderOps
 
 sealed trait Currency
 object Currency {
-  case object USD extends Currency
-  case object RUB extends Currency
-  case object EUR extends Currency
+  final case object USD extends Currency
+  final case object RUB extends Currency
+  final case object EUR extends Currency
 
   implicit val encoder: Encoder[Currency] = Encoder.instance {
     case USD => "USD".asJson

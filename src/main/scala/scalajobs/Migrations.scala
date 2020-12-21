@@ -1,11 +1,11 @@
-package scalajobs.db
+package scalajobs
 
 import org.flywaydb.core.Flyway
 import scalajobs.configuration.DbConfig
-import zio.{Has, URIO, URLayer, ZIO, ZLayer}
 import zio.blocking.{Blocking, effectBlocking}
 import zio.clock.Clock
 import zio.logging.Logging
+import zio._
 
 object Migrations {
   type Migrations = Has[Service]
@@ -20,17 +20,14 @@ object Migrations {
   type WithMigrations = Has[AfterMigrations]
 
   val live: URLayer[Has[DbConfig], Migrations] =
-    ZLayer.fromService { config =>
-      new Service {
-        override def applyMigrations(): URIO[Env, Unit] =
-          effectBlocking {
-            Flyway
-              .configure()
-              .dataSource(config.url, config.user, config.password)
-              .load()
-              .migrate()
-          }.orDie.unit
-      }
+    ZLayer.fromService { config => () =>
+      effectBlocking {
+        Flyway
+          .configure()
+          .dataSource(config.url, config.user, config.password)
+          .load()
+          .migrate()
+      }.orDie.unit
     }
 
   val afterMigrations: URLayer[Env with Migrations, WithMigrations] = ZIO

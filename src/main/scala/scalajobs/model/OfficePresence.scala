@@ -5,9 +5,9 @@ import io.circe.syntax.EncoderOps
 
 sealed trait OfficePresence
 object OfficePresence {
-  case object Remote extends OfficePresence
-  case object Office extends OfficePresence
-  case object Flexible extends OfficePresence
+  final case object Remote extends OfficePresence
+  final case object Office extends OfficePresence
+  final case object Flexible extends OfficePresence
 
   implicit val encoder: Encoder[OfficePresence] = Encoder.instance {
     case Remote   => "remote".asJson

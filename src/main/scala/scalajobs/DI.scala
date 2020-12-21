@@ -4,7 +4,6 @@ import scalajobs.api.{OrganizationsRoutes, VacanciesRoutes}
 import scalajobs.cache.{OrganizationCache, VacancyCache}
 import scalajobs.configuration.{Configuration, DbConnection}
 import scalajobs.dao.{OrganizationDao, VacancyDao}
-import scalajobs.db.Migrations
 import scalajobs.service.{OrganizationService, VacancyService}
 import zio.ZLayer
 import zio.blocking.Blocking

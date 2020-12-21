@@ -4,7 +4,7 @@ import org.http4s.server.Router
 import scalajobs.api.OrganizationsRoutes.OrganizationsRoutes
 import scalajobs.api.VacanciesRoutes.VacanciesRoutes
 import scalajobs.configuration.ApiConfig
-import zio.{Has, Task, UIO, ZIO}
+import zio.{Has, Task, ZIO}
 import zio.console._
 import zio.interop.catz._
 import org.http4s.implicits._
@@ -17,16 +17,9 @@ import zio.clock.Clock
 import zio.interop.catz.implicits.ioTimer
 import zio.logging.slf4j.Slf4jLogger
 
-case class Person(name: String) {
-  def sayMyName() = println(name)
-}
-
 object Main {
   private val log = LoggerFactory.getLogger("RuntimeReporter")
 
-  val serega = Person("Serega")
-
-  serega.sayMyName()
   def main(args: Array[String]): Unit = {
     type AppEnv = VacanciesRoutes with OrganizationsRoutes with AllConfigs
     val program = for {
