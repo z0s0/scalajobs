@@ -72,39 +72,48 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
 
   override def get(id: UUID): Task[Option[Vacancy]] = SQL.get(id).transact(tr)
 
-  override def create(params: VacancyDbParams): Task[Option[Vacancy]] = {
-
-    val res = for {
-      id <- SQL.insert(params)
-      vacancy <- id match {
+  override def create(params: VacancyDbParams): Task[Option[Vacancy]] =
+    SQL
+      .insert(params)
+      .flatMap {
         case Some(uuid) => SQL.get(uuid)
-        case None       => None.pure[ConnectionIO]
+        case None       => Option.empty[Vacancy].pure[ConnectionIO]
       }
-    } yield vacancy
-
-    res.transact(tr)
-  }
+      .transact(tr)
 
   private object SQL {
-    def get(id: UUID): ConnectionIO[Option[Vacancy]] = {
+    def get(id: UUID): ConnectionIO[Option[Vacancy]] =
       (selectVacancySQL ++ fr"WHERE v.id = $id")
         .query[VacancyRow]
         .map(_.toVacancy)
         .option
-    }
 
     def insert(params: VacancyDbParams): ConnectionIO[Option[UUID]] =
       sql"""
         INSERT INTO vacancies(
-          description
+          description,
           salary_from,
           salary_to,
-          organization_id
+          organization_id,
+          currency,
+          office_presence,
+          expires_at,
+          contact_email,
+          link,
+          created_at,
+          updated_at
         ) VALUES (
           ${params.description},
           ${params.salaryFrom},
           ${params.salaryTo},
-          ${params.organizationId}
+          ${params.organizationId},
+          ${params.currency},
+          ${params.officePresence},
+          ${params.expiresAt}::TIMESTAMP,
+          ${params.contactEmail},
+          ${params.link},
+          NOW(),
+          NOW()
         );  
       """.update
         .withGeneratedKeys[UUID]("id")

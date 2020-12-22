@@ -55,15 +55,34 @@ object VacancyService {
                 Some(orgId),
                 Some(salaryFrom),
                 Some(salaryTo),
+                Some(currency),
+                Some(officePresence),
+                Some(expiresAt),
+                Some(contactEmail),
+                Some(link)
                 ) =>
               dao
-                .create(VacancyDbParams(desc, salaryFrom, salaryTo, orgId))
+                .create(
+                  VacancyDbParams(
+                    desc,
+                    salaryFrom,
+                    salaryTo,
+                    orgId,
+                    currency,
+                    officePresence,
+                    expiresAt,
+                    contactEmail,
+                    link
+                  )
+                )
                 .flatMap {
                   case Some(vacancy) =>
                     Task.succeed(CreateVacancyResponse.Created(vacancy))
                   case None => Task.succeed(CreateVacancyResponse.Invalid)
                 }
-            case _ => Task.succeed(CreateVacancyResponse.Invalid)
+            case aa =>
+              println(aa)
+              Task.succeed(CreateVacancyResponse.Invalid)
           }
         }
       }
