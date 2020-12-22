@@ -28,6 +28,7 @@ object ProjectConfig {
 
   val zioDeps = Seq(
     "dev.zio" %% "zio" % versions.zio,
+    "dev.zio" %% "zio-macros" % versions.zio,
     "dev.zio" %% "zio-interop-cats" % versions.interopCats,
     "dev.zio" %% "zio-config" % versions.`zio-config`,
     "dev.zio" %% "zio-config-magnolia" % versions.`zio-config`,

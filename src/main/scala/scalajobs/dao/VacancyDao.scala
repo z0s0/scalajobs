@@ -8,7 +8,9 @@ import scalajobs.model.dbParams.VacancyDbParams
 import scalajobs.model.{Vacancy, VacancyFilter}
 import zio.logging.Logging
 import zio.{Has, Task, ZLayer}
+import zio.macros.accessible
 
+@accessible
 object VacancyDao {
   type VacancyDao = Has[Service]
 
