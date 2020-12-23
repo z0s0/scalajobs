@@ -10,10 +10,8 @@ import zio._
 object Migrations {
   type Migrations = Has[Service]
 
-  type Env = Blocking with Logging with Clock
-
   trait Service {
-    def applyMigrations(): URIO[Env, Unit]
+    def applyMigrations(): URIO[Blocking, Unit]
   }
 
   sealed trait AfterMigrations
@@ -30,7 +28,7 @@ object Migrations {
       }.orDie.unit
     }
 
-  val afterMigrations: URLayer[Env with Migrations, WithMigrations] = ZIO
+  val afterMigrations: URLayer[Blocking with Migrations, WithMigrations] = ZIO
     .service[Service]
     .flatMap(_.applyMigrations())
     .as(new AfterMigrations {})
