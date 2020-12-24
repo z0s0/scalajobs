@@ -18,6 +18,7 @@ object VacancyDao {
     def list(filters: List[VacancyFilter]): Task[Vector[Vacancy]]
     def get(id: UUID): Task[Option[Vacancy]]
     def create(params: VacancyDbParams): Task[Option[Vacancy]]
+    def deleteAll: Task[Int]
   }
 
   val live: ZLayer[DBTransactor with Logging, Throwable, VacancyDao] =

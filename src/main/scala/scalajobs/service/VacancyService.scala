@@ -70,7 +70,7 @@ object VacancyService {
                     orgId,
                     currency,
                     officePresence,
-                    expiresAt,
+                    LocalDateTime.parse(expiresAt),
                     contactEmail,
                     link
                   )
@@ -80,8 +80,7 @@ object VacancyService {
                     Task.succeed(CreateVacancyResponse.Created(vacancy))
                   case None => Task.succeed(CreateVacancyResponse.Invalid)
                 }
-            case aa =>
-              println(aa)
+            case _ =>
               Task.succeed(CreateVacancyResponse.Invalid)
           }
         }
