@@ -22,7 +22,7 @@ import cats.implicits._
 import zio.interop.catz._
 import scalajobs.dao.impl.VacancyDaoImpl.VacancyRow
 import scalajobs.model.dbParams.VacancyDbParams
-
+import java.sql.Timestamp
 object VacancyDaoImpl {
   final case class VacancyRow(id: UUID,
                               description: String,
@@ -81,6 +81,8 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
       }
       .transact(tr)
 
+  def deleteAll: Task[Int] = SQL.deleteAll.transact(tr)
+
   private object SQL {
     def get(id: UUID): ConnectionIO[Option[Vacancy]] =
       (selectVacancySQL ++ fr"WHERE v.id = $id")
@@ -109,7 +111,7 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
           ${params.organizationId},
           ${params.currency},
           ${params.officePresence},
-          ${params.expiresAt}::TIMESTAMP,
+          NOW() + interval '14 days',
           ${params.contactEmail},
           ${params.link},
           NOW(),
@@ -136,5 +138,7 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
          FROM vacancies v 
          JOIN organizations o ON v.organization_id = o.id
        """
+
+    def deleteAll: ConnectionIO[Int] = sql"delete from vacancies".update.run
   }
 }

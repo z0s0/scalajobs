@@ -1,5 +1,6 @@
 package scalajobs.model.dbParams
 
+import java.time.LocalDateTime
 import java.util.UUID
 
 final case class VacancyDbParams(description: String,
@@ -8,6 +9,6 @@ final case class VacancyDbParams(description: String,
                                  organizationId: UUID,
                                  currency: String,
                                  officePresence: String,
-                                 expiresAt: String,
+                                 expiresAt: LocalDateTime,
                                  contactEmail: String,
                                  link: String)
