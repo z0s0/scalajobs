@@ -4,19 +4,12 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 import scalajobs.cache.VacancyCache
-import scalajobs.cache.VacancyCache.VacanciesCache
+import scalajobs.cache.VacancyCache.VacancyCache
 import scalajobs.dao.VacancyDao
 import scalajobs.dao.VacancyDao.VacancyDao
 import scalajobs.model.dbParams.VacancyDbParams
 import scalajobs.model.form.VacancyForm
-import scalajobs.model.{
-  CreateVacancyResponse,
-  Currency,
-  OfficePresence,
-  Organization,
-  Vacancy,
-  VacancyFilter
-}
+import scalajobs.model.{CreateVacancyResponse, Vacancy, VacancyFilter}
 import zio.{Has, Task, ZLayer}
 
 object VacancyService {
@@ -28,9 +21,9 @@ object VacancyService {
     def create(params: VacancyForm): Task[CreateVacancyResponse]
   }
 
-  type Dependencies = VacancyDao with VacanciesCache
+  type Dependencies = VacancyDao with VacancyCache
 
-  val live: ZLayer[Dependencies, Throwable, VacancyService] =
+  val live: ZLayer[Dependencies, Nothing, VacancyService] =
     ZLayer.fromFunction[Dependencies, VacancyService.Service] { ctx =>
       val dao = ctx.get[VacancyDao.Service]
       val cache = ctx.get[VacancyCache.Service]

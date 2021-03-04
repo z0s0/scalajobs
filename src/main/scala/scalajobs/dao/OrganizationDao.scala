@@ -20,7 +20,7 @@ object OrganizationDao {
     def deleteAll(): Task[Int]
   }
 
-  val live: ZLayer[DBTransactor, Throwable, OrganizationDao] =
+  val live: ZLayer[DBTransactor, Nothing, OrganizationDao] =
     ZLayer.fromService(new OrganizationDaoImpl(_))
 
 }

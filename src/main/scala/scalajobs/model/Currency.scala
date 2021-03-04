@@ -9,11 +9,13 @@ object Currency {
   final case object USD extends Currency
   final case object RUB extends Currency
   final case object EUR extends Currency
+  final case object THB extends Currency
 
   implicit val encoder: Encoder[Currency] = Encoder.instance {
     case USD => "USD".asJson
     case RUB => "RUB".asJson
     case EUR => "EUR".asJson
+    case THB => "THB".asJson
   }
 
   implicit val decoder: Decoder[Currency] = deriveDecoder
@@ -23,6 +25,7 @@ object Currency {
       case USD => "USD"
       case RUB => "RUB"
       case EUR => "EUR"
+      case THB => "THB"
     }
 
   def fromString(str: String): Currency =

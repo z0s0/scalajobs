@@ -3,8 +3,10 @@ package scalajobs.cache
 import java.util.UUID
 
 import scalajobs.model.Organization
+import zio.macros.accessible
 import zio.{Has, Task, ULayer, ZLayer}
 
+@accessible
 object OrganizationCache {
   type OrganizationCache = Has[Service]
 
