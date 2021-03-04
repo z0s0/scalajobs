@@ -21,6 +21,6 @@ object VacancyDao {
     def deleteAll: Task[Int]
   }
 
-  val live: ZLayer[DBTransactor with Logging, Throwable, VacancyDao] =
+  val live: ZLayer[DBTransactor, Nothing, VacancyDao] =
     ZLayer.fromService(new VacancyDaoImpl(_))
 }

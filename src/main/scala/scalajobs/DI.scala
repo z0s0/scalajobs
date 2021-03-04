@@ -11,17 +11,20 @@ import zio.clock.Clock
 import zio.logging.slf4j.Slf4jLogger
 import zio.logging.Logging
 
+import scalajobs.dao.{Layer => DAOLayer}
+import scalajobs.api.{Layer => APILayer}
+import scalajobs.service.{Layer => ServiceLayer}
+import scalajobs.cache.{Layer => CacheLayer}
+
 object DI {
   val logging = Slf4jLogger.makeWithAnnotationsAsMdc(Nil)
 
   val live =
-    (Configuration.allConfigs ++ ZLayer
-      .requires[Blocking with Logging with Clock] ++ logging) >+>
+    (Configuration.allConfigs ++ Blocking.live) >+>
       Migrations.live >+>
       Migrations.afterMigrations >>>
-      (DbConnection.transactorLive ++ logging) >>>
-      (VacancyDao.live ++ OrganizationDao.live ++ VacancyCache.live ++ OrganizationCache.live) >>>
-      (VacancyService.live ++ OrganizationService.live) >>>
-      (VacanciesRoutes.live ++ OrganizationsRoutes.live ++ Configuration.allConfigs)
-
+      DbConnection.transactorLive >>>
+      (DAOLayer.live ++ CacheLayer.live) >>>
+      ServiceLayer.live >>>
+      APILayer.live ++ Configuration.allConfigs
 }

@@ -12,10 +12,7 @@ import cats.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.slf4j.LoggerFactory
 import scalajobs.configuration.Configuration.AllConfigs
-import zio.blocking.Blocking
-import zio.clock.Clock
 import zio.interop.catz.implicits.ioTimer
-import zio.logging.slf4j.Slf4jLogger
 
 object Main {
   private val log = LoggerFactory.getLogger("RuntimeReporter")
@@ -41,11 +38,8 @@ object Main {
       if (cause.died) log.error(cause.prettyPrint)
     }
 
-    val logging = Slf4jLogger.makeWithAnnotationsAsMdc(Nil)
-
     val layered = program
       .provideLayer(DI.live)
-      .provideSomeLayer[Blocking with Clock](logging)
       .tapError(err => putStrLn(s"Execution failed with: $err"))
 
     runtime.unsafeRun(layered.orDie)
