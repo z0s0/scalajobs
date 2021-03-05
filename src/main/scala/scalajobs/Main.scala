@@ -7,13 +7,12 @@ import scalajobs.configuration.ApiConfig
 import zio.{Has, RIO, ZIO}
 import zio.console._
 import zio.interop.catz._
-
 import cats.implicits._
 import org.http4s.HttpRoutes
 import org.http4s.syntax.kleisli._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.slf4j.LoggerFactory
-import scalajobs.api.OrganizationsRoutes
+import scalajobs.api.{Docs, OrganizationsRoutes}
 import scalajobs.configuration.Configuration.AllConfigs
 import zio.clock.Clock
 import zio.interop.catz.implicits.ioTimer
@@ -23,19 +22,13 @@ object Main {
   private val log = LoggerFactory.getLogger("RuntimeReporter")
 
   def main(args: Array[String]): Unit = {
-    import sttp.tapir.docs.openapi.OpenAPIDocsInterpreter
-    import sttp.tapir.openapi.circe.yaml._
-    val yaml = OpenAPIDocsInterpreter
-      .toOpenAPI(OrganizationsRoutes.organizationsDocs, "Our pets", "1.0")
-      .toYaml
-
     type AppEnv = Clock with OrganizationsRoutes with AllConfigs
     val program = for {
       apiConf <- ZIO.access[Has[ApiConfig]](_.get)
       oR <- ZIO.access[OrganizationsRoutes](_.get)
       _ <- ZIO.runtime[AppEnv].flatMap { implicit rts =>
         val swaggerRoutes: HttpRoutes[RIO[Clock, *]] =
-          new SwaggerHttp4s(yaml).routes[RIO[Clock, *]]
+          new SwaggerHttp4s(Docs.yaml).routes[RIO[Clock, *]]
 
         BlazeServerBuilder[RIO[Clock, *]]
           .bindHttp(apiConf.port, apiConf.endpoint)

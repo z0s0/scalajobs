@@ -1,7 +1,6 @@
 package scalajobs.model
 
 import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.deriveDecoder
 import io.circe.syntax.EncoderOps
 
 sealed trait Currency
@@ -11,14 +10,15 @@ object Currency {
   final case object EUR extends Currency
   final case object THB extends Currency
 
-  implicit val encoder: Encoder[Currency] = Encoder.instance {
-    case USD => "USD".asJson
-    case RUB => "RUB".asJson
-    case EUR => "EUR".asJson
-    case THB => "THB".asJson
-  }
+  implicit val encoder: Encoder[Currency] = Encoder.instance(toString(_).asJson)
 
-  implicit val decoder: Decoder[Currency] = deriveDecoder
+  implicit val decoder: Decoder[Currency] = Decoder[String].emap {
+    case "USD" => Right(USD)
+    case "RUB" => Right(RUB)
+    case "EUR" => Right(EUR)
+    case "THB" => Right(THB)
+    case _     => Left("unknown currency")
+  }
 
   def toString(currency: Currency): String =
     currency match {

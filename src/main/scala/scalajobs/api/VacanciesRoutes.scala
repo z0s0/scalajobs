@@ -1,79 +1,45 @@
 package scalajobs.api
 
-import io.circe.{Decoder, Encoder}
-import org.http4s.{EntityDecoder, EntityEncoder, HttpRoutes}
-import org.http4s.dsl.Http4sDsl
-import zio.{Has, Task, URLayer, ZLayer}
-import io.circe.generic.auto._
-import zio.interop.catz._
-import org.http4s.circe._
-import scalajobs.model.form.VacancyForm
-import scalajobs.model.{CreateVacancyResponse, VacancyFilter}
-import scalajobs.service.VacancyService
+import org.http4s.HttpRoutes
+import scalajobs.model.CreateVacancyResponse
 import scalajobs.service.VacancyService.VacancyService
+import zio.{Has, IO, RIO, URLayer, ZLayer}
+import zio.interop.catz._
+import zio.clock.Clock
+import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
+import sttp.tapir.ztapir._
 
 object VacanciesRoutes {
-  type VacanciesRoutes = Has[Service]
-
-  trait Service {
-    def route: HttpRoutes[Task]
-  }
+  type VacanciesRoutes = Has[HttpRoutes[RIO[Clock, *]]]
 
   val live: URLayer[VacancyService, VacanciesRoutes] =
-    ZLayer.fromService(new VacanciesRouter(_))
-}
-
-final class VacanciesRouter(srv: VacancyService.Service)
-    extends Http4sDsl[Task]
-    with VacanciesRoutes.Service {
-
-  implicit def circeJsonDecoder[A: Decoder]: EntityDecoder[Task, A] = jsonOf
-  implicit def circeJsonEncoder[A: Encoder]: EntityEncoder[Task, A] =
-    jsonEncoderOf
-
-  override def route: HttpRoutes[Task] = HttpRoutes.of[Task] {
-    case GET -> Root / "vacancies" / UUIDVar(id) =>
-      srv.get(id).flatMap {
-        case Some(value) => Ok(value)
-        case None        => NotFound("vacancy does not exist")
+    ZLayer.fromService { srv =>
+      val getVacancyLogic = Docs.vacancyDocs.zServerLogic { id =>
+        srv
+          .get(id)
+          .catchAll(_ => IO.fail("Internal Error"))
+          .flatMap {
+            case Some(vacancy) => IO.succeed(vacancy)
+            case None          => IO.fail("not found")
+          }
       }
 
-    case GET -> Root / "vacancies" :? salaryFrom(salaryFrom) +& salaryTo(
-          salaryTo
-        ) +& actual(actualFlag) => {
-      // TODO make generic and look ok
-      val filters = List[VacancyFilter]()
-      val withSalaryFrom =
-        if (salaryFrom.nonEmpty)
-          VacancyFilter.SalaryFrom(salaryFrom.get) :: filters
-        else
-          filters
+      val listVacanciesLogic = Docs.vacanciesDocs.zServerLogic { filters =>
+        srv.list(List()).orElseFail(())
+      }
 
-      val withSalaryTo =
-        if (salaryTo.nonEmpty)
-          VacancyFilter.SalaryTo(salaryTo.get) :: withSalaryFrom
-        else
-          withSalaryFrom
+      val createVacancyLogic = Docs.createVacancyDocs.zServerLogic { form =>
+        srv
+          .create(form)
+          .catchAll(_ => IO.fail("Internal err"))
+          .flatMap {
+            case CreateVacancyResponse.Created(vacancy) => IO.succeed(vacancy)
+            case CreateVacancyResponse.Invalid          => IO.fail("invalid")
+          }
+      }
 
-      val withActual =
-        if (actualFlag.nonEmpty)
-          VacancyFilter.Actual(actualFlag.get) :: withSalaryTo
-        else
-          withSalaryTo
-
-      Ok(srv.list(withActual))
+      ZHttp4sServerInterpreter
+        .from(List(getVacancyLogic, listVacanciesLogic, createVacancyLogic))
+        .toRoutes
     }
-
-    case req @ POST -> Root / "vacancies" =>
-      req.decode[VacancyForm] { params =>
-        srv.create(params).flatMap {
-          case CreateVacancyResponse.Created(vacancy) => Created(vacancy)
-          case CreateVacancyResponse.Invalid          => UnprocessableEntity()
-        }
-      }
-  }
-
-  object salaryFrom extends OptionalQueryParamDecoderMatcher[Int]("salaryFrom")
-  object salaryTo extends OptionalQueryParamDecoderMatcher[Int]("salaryTo")
-  object actual extends OptionalQueryParamDecoderMatcher[Boolean]("actual")
 }

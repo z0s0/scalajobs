@@ -3,11 +3,12 @@ package scalajobs.model
 import java.util.UUID
 import java.time.LocalDateTime
 
-import io.circe.Encoder
-import io.circe.generic.semiauto.deriveEncoder
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.{deriveEncoder, deriveDecoder}
 
 object Vacancy {
   implicit val encoder: Encoder[Vacancy] = deriveEncoder
+  implicit lazy val decoder: Decoder[Vacancy] = deriveDecoder
 }
 final case class Vacancy(id: Option[UUID],
                          description: String,

@@ -1,6 +1,6 @@
 package scalajobs.model
 
-import io.circe.Encoder
+import io.circe.{Decoder, Encoder}
 import io.circe.syntax.EncoderOps
 
 sealed trait OfficePresence
@@ -13,6 +13,13 @@ object OfficePresence {
     case Remote   => "remote".asJson
     case Office   => "office".asJson
     case Flexible => "flexible".asJson
+  }
+
+  implicit val decoder: Decoder[OfficePresence] = Decoder[String].emap {
+    case "remote"   => Right(OfficePresence.Remote)
+    case "office"   => Right(OfficePresence.Office)
+    case "flexible" => Right(OfficePresence.Flexible)
+    case _          => Left("unknown office presence")
   }
 
   def toString(officePresence: OfficePresence): String =
