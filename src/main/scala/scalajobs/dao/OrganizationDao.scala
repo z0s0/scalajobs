@@ -17,7 +17,7 @@ object OrganizationDao {
     def list: Task[Vector[Organization]]
     def get(id: UUID): Task[Option[Organization]]
     def create(params: OrganizationDbParams): Task[Option[Organization]]
-    def deleteAll(): Task[Int]
+    def deleteAll: Task[Int]
   }
 
   val live: ZLayer[DBTransactor, Nothing, OrganizationDao] =

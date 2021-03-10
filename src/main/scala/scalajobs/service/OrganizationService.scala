@@ -7,8 +7,10 @@ import scalajobs.cache.OrganizationCache.OrganizationCache
 import scalajobs.dao.OrganizationDao
 import scalajobs.dao.OrganizationDao.OrganizationDao
 import scalajobs.model.{GetOrganizationResponse, Organization}
+import zio.macros.accessible
 import zio.{Has, Task, URLayer, ZLayer}
 
+@accessible
 object OrganizationService {
   type OrganizationService = Has[Service]
 

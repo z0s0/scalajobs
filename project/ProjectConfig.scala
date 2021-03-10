@@ -15,6 +15,7 @@ object ProjectConfig {
     val `zio-logging` = "0.5.2"
     val logback = "1.2.3"
     val slf4j = "1.7.30"
+    val tapir = "0.17.14"
   }
 
   val confDeps = Seq(
@@ -58,6 +59,17 @@ object ProjectConfig {
     "org.tpolecat" %% "doobie-hikari" % versions.doobie
   )
 
+  val tapirDeps = Seq(
+    "com.softwaremill.sttp.tapir" %% "tapir-zio" % versions.tapir,
+    "com.softwaremill.sttp.tapir" %% "tapir-zio-http4s-server" % versions.tapir,
+    "com.softwaremill.sttp.tapir" %% "tapir-core" % versions.tapir,
+    "com.softwaremill.sttp.tapir" %% "tapir-json-circe" % versions.tapir,
+    "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-http4s" % versions.tapir,
+    "com.softwaremill.sttp.tapir" %% "tapir-redoc-http4s" % versions.tapir,
+    "com.softwaremill.sttp.tapir" %% "tapir-openapi-docs" % versions.tapir,
+    "com.softwaremill.sttp.tapir" %% "tapir-openapi-circe-yaml" % versions.tapir
+  )
+
   val logDependencies = Seq(
     "ch.qos.logback" % "logback-classic" % versions.logback,
     "org.slf4j" % "slf4j-api" % versions.slf4j
@@ -70,5 +82,6 @@ object ProjectConfig {
       doobieDeps ++
       confDeps ++
       circeDeps ++
-      logDependencies
+      logDependencies ++
+      tapirDeps
 }

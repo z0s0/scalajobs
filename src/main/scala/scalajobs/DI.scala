@@ -26,5 +26,5 @@ object DI {
       DbConnection.transactorLive >>>
       (DAOLayer.live ++ CacheLayer.live) >>>
       ServiceLayer.live >>>
-      APILayer.live ++ Configuration.allConfigs
+      OrganizationsRoutes.live ++ VacanciesRoutes.live ++ Configuration.allConfigs
 }
