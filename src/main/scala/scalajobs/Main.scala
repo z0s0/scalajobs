@@ -8,7 +8,7 @@ import org.http4s.HttpRoutes
 import org.http4s.syntax.kleisli._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.slf4j.LoggerFactory
-import scalajobs.api.{Docs, OrganizationsRoutes, VacanciesRoutes}
+import scalajobs.api.{Docs, OrganizationsRoutes, TagsRoutes, VacanciesRoutes}
 import scalajobs.configuration.Configuration.AllConfigs
 import scalajobs.service.Layer.Services
 import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
@@ -21,9 +21,10 @@ object Main {
   type AppEnv = Clock with Services with AllConfigs
   val vacanciesRoutes = VacanciesRoutes.routes.map(_.widen[AppEnv])
   val organizationRoutes = OrganizationsRoutes.routes.map(_.widen[AppEnv])
+  val tagsRoutes = TagsRoutes.routes.map(_.widen[AppEnv])
 
   val routes = ZHttp4sServerInterpreter
-    .from(vacanciesRoutes ++ organizationRoutes)
+    .from(vacanciesRoutes ++ organizationRoutes ++ tagsRoutes)
     .toRoutes
 
   private val log = LoggerFactory.getLogger("RuntimeReporter")
