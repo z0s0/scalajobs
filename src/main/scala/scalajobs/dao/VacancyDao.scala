@@ -5,9 +5,8 @@ import java.util.UUID
 import scalajobs.configuration.DbConnection.DBTransactor
 import scalajobs.dao.impl.VacancyDaoImpl
 import scalajobs.model.dbParams.VacancyDbParams
-import scalajobs.model.{Vacancy, VacancyFilter}
-import zio.logging.Logging
-import zio.{Has, Task, ZLayer}
+import scalajobs.model.{DbError, Vacancy, VacancyFilter}
+import zio.{Has, IO, Task, ZLayer}
 import zio.macros.accessible
 
 @accessible
@@ -17,7 +16,7 @@ object VacancyDao {
   trait Service {
     def list(filters: List[VacancyFilter]): Task[Vector[Vacancy]]
     def get(id: UUID): Task[Option[Vacancy]]
-    def create(params: VacancyDbParams): Task[Option[Vacancy]]
+    def create(params: VacancyDbParams): IO[DbError, Vacancy]
     def deleteAll: Task[Int]
   }
 

@@ -26,19 +26,6 @@ object VacancyDaoSpec extends DefaultRunnableSpec {
       (DbConnection.transactorLive ++ loggingLayer) >>>
       VacancyDao.live
 
-//  val genVacancyDbParams: Gen[Random with Sized, VacancyDbParams] =
-//    VacancyDbParams(
-//      description = anyString,
-//      salaryFrom = anyInt.filter(_ > 0),
-//      salaryTo = anyInt.filter(_ > 0),
-//      currency = anyString,
-//      officePresence = anyString,
-//      link = anyString,
-//      contactEmail = anyString,
-//      organizationId = anyUUID,
-//      expiresAt = anyLocalDateTime
-//    )
-
   val genVacancyDbParams = DeriveGen[VacancyDbParams]
 
   def spec =

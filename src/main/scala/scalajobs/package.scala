@@ -1,5 +1,7 @@
+import org.http4s.HttpRoutes
+import zio.RIO
+import zio.clock.Clock
+
 package object scalajobs {
-  type DatabaseUrl = String
-  type DatabaseUser = String
-  type DatabasePassword = String
+  type Routes = HttpRoutes[RIO[Clock, *]]
 }

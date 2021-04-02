@@ -1,44 +1,40 @@
 package scalajobs.service
 
-import java.util.UUID
-
-import scalajobs.cache.OrganizationCache
-import scalajobs.cache.OrganizationCache.OrganizationCache
-import scalajobs.dao.OrganizationDao
 import scalajobs.dao.OrganizationDao.OrganizationDao
-import scalajobs.model.{GetOrganizationResponse, Organization}
-import zio.macros.accessible
-import zio.{Has, Task, URLayer, ZLayer}
+import scalajobs.model.{ClientError, DbError, Organization}
+import scalajobs.model.dbParams.OrganizationDbParams
+import zio.{Has, IO, Task, ZIO, ZLayer}
 
-@accessible
 object OrganizationService {
   type OrganizationService = Has[Service]
 
   trait Service {
-    def get(id: UUID): Task[GetOrganizationResponse]
-    def list: Task[Vector[Organization]]
+    def list: Task[List[Organization]]
+    def create(params: OrganizationDbParams): IO[ClientError, Organization]
   }
 
-  type Deps = OrganizationCache with OrganizationDao
-
-  val live: URLayer[Deps, OrganizationService] =
-    ZLayer.fromFunction[Deps, OrganizationService.Service] { ctx =>
-      val dao = ctx.get[OrganizationDao.Service]
-      val cache = ctx.get[OrganizationCache.Service]
-
+  val live: ZLayer[OrganizationDao, Nothing, OrganizationService] =
+    ZLayer.fromService { dao =>
       new Service {
-        override def get(id: UUID): Task[GetOrganizationResponse] =
-          cache.get(id).flatMap {
-            case Some(org) => Task.succeed(GetOrganizationResponse.Found(org))
-            case None =>
-              dao.get(id).flatMap {
-                case Some(org) =>
-                  Task.succeed(GetOrganizationResponse.Found(org))
-                case None => Task.succeed(GetOrganizationResponse.NotFound)
-              }
-          }
+        override def list: Task[List[Organization]] =
+          dao.list.map(_.toList)
 
-        override def list: Task[Vector[Organization]] = dao.list
+        override def create(
+          params: OrganizationDbParams
+        ): IO[ClientError, Organization] = {
+          dao.create(params).catchAll {
+            case DbError.Conflict(reason) =>
+              IO.fail(ClientError.Invalid(reason))
+            case DbError.Disaster => IO.fail(ClientError.Disaster)
+          }
+        }
       }
     }
+
+  def list: ZIO[OrganizationService, Throwable, List[Organization]] =
+    ZIO.accessM(_.get.list)
+  def create(
+    params: OrganizationDbParams
+  ): ZIO[OrganizationService, ClientError, Organization] =
+    ZIO.accessM(_.get.create(params))
 }

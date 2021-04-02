@@ -3,14 +3,12 @@ package scalajobs.service
 import java.time.LocalDateTime
 import java.util.UUID
 
-import scalajobs.cache.VacancyCache
-import scalajobs.cache.VacancyCache.VacancyCache
 import scalajobs.dao.VacancyDao
 import scalajobs.dao.VacancyDao.VacancyDao
 import scalajobs.model.dbParams.VacancyDbParams
 import scalajobs.model.form.VacancyForm
-import scalajobs.model.{CreateVacancyResponse, Vacancy, VacancyFilter}
-import zio.{Has, Task, ZLayer}
+import scalajobs.model.{ClientError, DbError, Helpers, Vacancy, VacancyFilter}
+import zio.{Has, IO, Task, ZIO, ZLayer}
 
 object VacancyService {
   type VacancyService = Has[Service]
@@ -18,66 +16,50 @@ object VacancyService {
   trait Service {
     def get(id: UUID): Task[Option[Vacancy]]
     def list(filters: List[VacancyFilter]): Task[Vector[Vacancy]]
-    def create(params: VacancyForm): Task[CreateVacancyResponse]
+    def create(params: VacancyForm): IO[ClientError, Vacancy]
   }
 
-  type Dependencies = VacancyDao with VacancyCache
+  type Dependencies = VacancyDao
 
   val live: ZLayer[Dependencies, Nothing, VacancyService] =
     ZLayer.fromFunction[Dependencies, VacancyService.Service] { ctx =>
       val dao = ctx.get[VacancyDao.Service]
-      val cache = ctx.get[VacancyCache.Service]
 
       new Service {
-        override def get(id: UUID): Task[Option[Vacancy]] =
-          cache.get(id).flatMap {
-            case res @ Some(_) => Task.succeed(res)
-            case None          => dao.get(id)
-          }
+        override def get(id: UUID): Task[Option[Vacancy]] = dao.get(id)
 
         override def list(filters: List[VacancyFilter]): Task[Vector[Vacancy]] =
           dao.list(filters)
 
-        override def create(
-          params: VacancyForm
-        ): Task[CreateVacancyResponse] = {
-          params match {
-            case VacancyForm(
-                None,
-                Some(desc),
-                Some(orgId),
-                Some(salaryFrom),
-                Some(salaryTo),
-                Some(currency),
-                Some(officePresence),
-                Some(expiresAt),
-                Some(contactEmail),
-                Some(link)
-                ) =>
-              dao
-                .create(
-                  VacancyDbParams(
-                    desc,
-                    salaryFrom,
-                    salaryTo,
-                    orgId,
-                    currency,
-                    officePresence,
-                    LocalDateTime.parse(expiresAt),
-                    contactEmail,
-                    link
-                  )
-                )
-                .flatMap {
-                  case Some(vacancy) =>
-                    Task.succeed(CreateVacancyResponse.Created(vacancy))
-                  case None => Task.succeed(CreateVacancyResponse.Invalid)
-                }
-            case _ =>
-              Task.succeed(CreateVacancyResponse.Invalid)
+        override def create(form: VacancyForm): IO[ClientError, Vacancy] = {
+          val dbParams = VacancyDbParams(
+            description = form.description.get,
+            salaryFrom = form.salaryFrom.get,
+            salaryTo = form.salaryTo.get,
+            organizationId = UUID.fromString(form.organizationId.get),
+            currency = form.currency.get,
+            officePresence = form.officePresence.get,
+            expiresAt = Helpers.localDateTimeFromISO8601(form.expiresAt.get),
+            contactEmail = form.contactEmail.get,
+            link = form.link.get
+          )
+
+          dao.create(dbParams).mapError {
+            case DbError.Conflict(reason) => ClientError.Invalid(reason)
+            case DbError.Disaster         => ClientError.Disaster
           }
         }
       }
     }
 
+  def list(
+    filter: List[VacancyFilter]
+  ): ZIO[VacancyService, Throwable, Vector[Vacancy]] =
+    ZIO.accessM(_.get.list(filter))
+
+  def get(id: UUID): ZIO[VacancyService, Throwable, Option[Vacancy]] =
+    ZIO.accessM(_.get.get(id))
+
+  def create(params: VacancyForm): ZIO[VacancyService, ClientError, Vacancy] =
+    ZIO.accessM(_.get.create(params))
 }
