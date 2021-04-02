@@ -61,9 +61,7 @@ final class OrganizationDaoImpl(tr: Transactor[Task])
 
     def insert(
       params: OrganizationDbParams
-    ): ConnectionIO[Either[String, UUID]] = {
-      println(params)
-
+    ): ConnectionIO[Either[String, UUID]] =
       sql"""
          INSERT INTO organizations(name, description, created_at, updated_at)
          VALUES (${params.name}, ${params.description}, NOW(), NOW())
@@ -75,7 +73,7 @@ final class OrganizationDaoImpl(tr: Transactor[Task])
         }
         .compile
         .lastOrError
-    }
+
     def all: ConnectionIO[Vector[Organization]] =
       sql"select id, name, description from organizations"
         .query[OrganizationRow]
