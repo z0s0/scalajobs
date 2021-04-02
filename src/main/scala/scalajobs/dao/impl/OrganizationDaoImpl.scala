@@ -5,18 +5,21 @@ import java.util.UUID
 import OrganizationDaoImpl.OrganizationRow
 import doobie.util.transactor.Transactor
 import scalajobs.dao.OrganizationDao
-import scalajobs.model.Organization
-import zio.Task
+import scalajobs.model.{DbError, Organization}
+import zio.{IO, Task}
 import doobie._
+import doobie.postgres._
 import doobie.implicits._
 import doobie.postgres.implicits._
-import cats.implicits._
+import scalajobs.model.DbError.{Conflict, Disaster}
 import scalajobs.model.dbParams.OrganizationDbParams
 import zio.interop.catz._
 
 object OrganizationDaoImpl {
-  final case class OrganizationRow(id: UUID, name: String) {
-    def toOrganization: Organization = Organization(Some(id), name)
+  final case class OrganizationRow(id: UUID,
+                                   name: String,
+                                   description: String) {
+    def toOrganization: Organization = Organization(Some(id), name, description)
   }
 }
 
@@ -29,35 +32,50 @@ final class OrganizationDaoImpl(tr: Transactor[Task])
 
   override def create(
     params: OrganizationDbParams
-  ): Task[Option[Organization]] = {
-    (for {
-      id <- SQL.insert(params)
-      organization <- id match {
-        case Some(uuid) => SQL.get(uuid)
-        case None       => Option.empty[Organization].pure[ConnectionIO]
+  ): IO[DbError, Organization] = {
+    SQL
+      .insert(params)
+      .transact(tr)
+      .flatMap {
+        case Left(error) => IO.fail(Conflict(error))
+        case Right(id) =>
+          IO.succeed(
+            Organization(
+              id = Some(id),
+              name = params.name,
+              description = params.description
+            )
+          )
       }
-    } yield organization).transact(tr)
+      .catchAll(_ => IO.fail(Disaster))
   }
 
   def deleteAll: Task[Int] = SQL.deleteAll.transact(tr)
 
   private object SQL {
     def get(id: UUID): ConnectionIO[Option[Organization]] =
-      sql"select id, name from organizations where id = $id"
+      sql"select id, name, description from organizations where id = $id"
         .query[OrganizationRow]
         .map(_.toOrganization)
         .option
 
-    def insert(params: OrganizationDbParams): ConnectionIO[Option[UUID]] =
+    def insert(
+      params: OrganizationDbParams
+    ): ConnectionIO[Either[String, UUID]] =
       sql"""
-         INSERT INTO organizations(name, created_at, updated_at) VALUES (${params.name}, NOW(), NOW())
+         INSERT INTO organizations(name, description, created_at, updated_at)
+         VALUES (${params.name}, ${params.description}, NOW(), NOW())
        """.update
         .withGeneratedKeys[UUID]("id")
+        .attemptSomeSqlState {
+          case sqlstate.class23.UNIQUE_VIOLATION =>
+            s"Organization with name ${params.name} already exists"
+        }
         .compile
-        .last
+        .lastOrError
 
     def all: ConnectionIO[Vector[Organization]] =
-      sql"select id, name from organizations"
+      sql"select id, name, description from organizations"
         .query[OrganizationRow]
         .map(_.toOrganization)
         .to[Vector]

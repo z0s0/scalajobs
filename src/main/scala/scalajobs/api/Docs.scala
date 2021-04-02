@@ -2,9 +2,8 @@ package scalajobs.api
 
 import java.util.UUID
 
-import scalajobs.model.form.VacancyForm
-import scalajobs.model.form.VacancyForm.jsonDecoder
-import scalajobs.model.{Organization, Vacancy}
+import scalajobs.model.form.{OrganizationForm, VacancyForm}
+import scalajobs.model.{ClientError, Organization, Vacancy}
 import sttp.model.StatusCode
 import sttp.tapir.docs.openapi.OpenAPIDocsInterpreter
 import sttp.tapir.json.circe.jsonBody
@@ -23,7 +22,15 @@ object Docs {
   val organizationsDocs =
     endpoint.get
       .in("organizations")
-      .out(jsonBody[Vector[Organization]])
+      .out(jsonBody[List[Organization]])
+
+  val createOrganization =
+    endpoint.post
+      .in("organizations")
+      .in(jsonBody[OrganizationForm])
+      .out(jsonBody[Organization])
+      .errorOut(jsonBody[List[ClientError]])
+      .errorOut(statusCode(StatusCode.BadRequest))
 
   val vacanciesDocs =
     endpoint.get
@@ -43,16 +50,17 @@ object Docs {
       .in(jsonBody[VacancyForm])
       .out(jsonBody[Vacancy])
       .out(statusCode(StatusCode.Created))
-      .errorOut(stringBody)
+      .errorOut(jsonBody[List[ClientError]])
       .errorOut(statusCode(StatusCode.BadRequest))
 
   val docs =
     List(
       organizationsDocs,
       organizationDocs,
+      createOrganization,
       vacancyDocs,
       vacanciesDocs,
-      createVacancyDocs
+      createVacancyDocs,
     )
 
   val yaml =

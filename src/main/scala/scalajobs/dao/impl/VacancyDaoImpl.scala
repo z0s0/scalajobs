@@ -7,22 +7,22 @@ import doobie.util.transactor.Transactor
 import scalajobs.dao.VacancyDao
 import scalajobs.model.{
   Currency,
+  DbError,
   OfficePresence,
   Organization,
   Vacancy,
   VacancyFilter
 }
-import zio.Task
+import zio.{IO, Task}
 import doobie._
 import doobie.implicits._
-import doobie.implicits.javatime._
-import doobie.postgres._
 import doobie.postgres.implicits._
-import cats.implicits._
+import doobie.implicits.javatime._
 import zio.interop.catz._
 import scalajobs.dao.impl.VacancyDaoImpl.VacancyRow
+import scalajobs.model.DbError.Disaster
 import scalajobs.model.dbParams.VacancyDbParams
-import java.sql.Timestamp
+
 object VacancyDaoImpl {
   final case class VacancyRow(id: UUID,
                               description: String,
@@ -34,12 +34,17 @@ object VacancyDaoImpl {
                               link: String,
                               officePresence: String,
                               organizationName: String,
-                              organizationId: UUID) {
+                              organizationId: UUID,
+                              organizationDesc: String) {
     def toVacancy: Vacancy =
       Vacancy(
-        id = Some(id),
+        id = id,
         description = description,
-        organization = Organization(id = Some(organizationId), organizationName),
+        organization = Organization(
+          id = Some(organizationId),
+          organizationName,
+          organizationDesc
+        ),
         salaryFrom = salaryFrom,
         salaryTo = salaryTo,
         currency = Currency.fromString(currency),
@@ -72,14 +77,12 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
 
   override def get(id: UUID): Task[Option[Vacancy]] = SQL.get(id).transact(tr)
 
-  override def create(params: VacancyDbParams): Task[Option[Vacancy]] =
+  override def create(params: VacancyDbParams): IO[DbError, Vacancy] =
     SQL
       .insert(params)
-      .flatMap {
-        case Some(uuid) => SQL.get(uuid)
-        case None       => Option.empty[Vacancy].pure[ConnectionIO]
-      }
+      .flatMap(SQL.get)
       .transact(tr)
+      .foldM(_ => IO.fail(Disaster), vacOpt => IO.succeed(vacOpt.get))
 
   def deleteAll: Task[Int] = SQL.deleteAll.transact(tr)
 
@@ -90,7 +93,7 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
         .map(_.toVacancy)
         .option
 
-    def insert(params: VacancyDbParams): ConnectionIO[Option[UUID]] =
+    def insert(params: VacancyDbParams): ConnectionIO[UUID] =
       sql"""
         INSERT INTO vacancies(
           description,
@@ -120,7 +123,7 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
       """.update
         .withGeneratedKeys[UUID]("id")
         .compile
-        .last
+        .lastOrError
 
     def selectVacancySQL: Fragment =
       sql"""
@@ -134,7 +137,8 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
                 v.link,
                 v.office_presence, 
                 o.name,  
-                o.id
+                o.id,
+                o.description
          FROM vacancies v 
          JOIN organizations o ON v.organization_id = o.id
        """

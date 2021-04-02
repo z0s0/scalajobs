@@ -2,12 +2,14 @@ package scalajobs.model.form
 
 import java.util.UUID
 
-import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import cats.data.Validated
+import io.circe.generic.JsonCodec
+import scalajobs.model.{Form, Helpers}
+import cats.syntax.semigroup._
 
-final case class VacancyForm(id: Option[UUID],
-                             description: Option[String],
-                             organizationId: Option[UUID],
+@JsonCodec
+final case class VacancyForm(description: Option[String],
+                             organizationId: Option[String],
                              salaryFrom: Option[Int],
                              salaryTo: Option[Int],
                              currency: Option[String],
@@ -15,8 +17,36 @@ final case class VacancyForm(id: Option[UUID],
                              expiresAt: Option[String],
                              contactEmail: Option[String],
                              link: Option[String])
+    extends Form {
+  override def validate = {
+    def emptyFieldError(fieldName: String) =
+      List(s"${fieldName} is not provided or empty")
 
-object VacancyForm {
-  implicit val jsonDecoder: Decoder[VacancyForm] = deriveDecoder
-  implicit val jsonEncoder: Encoder[VacancyForm] = deriveEncoder
+    Validated
+      .cond(
+        description.getOrElse("").length > 10,
+        "",
+        emptyFieldError("description")
+      ) |+| Validated
+      .cond(
+        positive(salaryFrom),
+        "",
+        List("salary must be present and positive")
+      ) |+| Validated
+      .cond(positive(salaryTo), "", List("salary must be present and positive")) |+| Validated
+      .cond(
+        salaryTo.getOrElse(0) >= salaryFrom.getOrElse(0),
+        "",
+        List("Max salary must be greater than min salary")
+      ) |+| Validated
+      .cond(
+        Helpers.isValidUUID(organizationId.getOrElse("")),
+        "",
+        List("Invalid OrganizationID")
+      ) |+| Validated.cond(
+      Helpers.isValidDateTime(expiresAt.getOrElse("")),
+      "",
+      List("expiresAt must be present and conform ISO8601")
+    )
+  }
 }
