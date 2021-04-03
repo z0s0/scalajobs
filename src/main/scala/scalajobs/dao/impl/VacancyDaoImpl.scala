@@ -18,9 +18,10 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.implicits.javatime._
+import doobie.postgres.sqlstate
 import zio.interop.catz._
 import scalajobs.dao.impl.VacancyDaoImpl.VacancyRow
-import scalajobs.model.DbError.Disaster
+import scalajobs.model.DbError.{Disaster, Invalid}
 import scalajobs.model.dbParams.VacancyDbParams
 
 object VacancyDaoImpl {
@@ -77,13 +78,15 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
   override def create(params: VacancyDbParams): IO[DbError, Vacancy] =
     SQL
       .insert(params)
-      .flatMap(SQL.get)
       .transact(tr)
-      .foldM(e => {
-        println(e)
-        IO.fail(Disaster)
-      }, vacOpt => IO.succeed(vacOpt.get))
-
+      .flatMap {
+        case Left(errorMsg) => IO.fail(Invalid(errorMsg))
+        case Right(id)      => SQL.get(id).map(_.get).transact(tr)
+      }
+      .catchAll {
+        case e @ Invalid(_) => IO.fail(e)
+        case _              => IO.fail(Disaster)
+      }
   def deleteAll: Task[Int] = SQL.deleteAll.transact(tr)
 
   private object SQL {
@@ -93,7 +96,7 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
         .map(_.toVacancy)
         .option
 
-    def insert(params: VacancyDbParams): ConnectionIO[UUID] =
+    def insert(params: VacancyDbParams): ConnectionIO[Either[String, UUID]] =
       sql"""
         INSERT INTO vacancies(
           description,
@@ -122,6 +125,10 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
         );  
       """.update
         .withGeneratedKeys[UUID]("id")
+        .attemptSomeSqlState {
+          case sqlstate.class23.FOREIGN_KEY_VIOLATION =>
+            "organization does not exist"
+        }
         .compile
         .lastOrError
 

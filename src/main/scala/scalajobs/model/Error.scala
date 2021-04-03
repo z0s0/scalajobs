@@ -12,6 +12,7 @@ sealed trait ClientError extends Error
 
 object DbError {
   final case class Conflict(reason: String) extends DbError
+  final case class Invalid(reason: String) extends DbError
   final case object Disaster extends DbError
 }
 
