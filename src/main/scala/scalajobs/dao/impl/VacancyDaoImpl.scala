@@ -64,6 +64,8 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
         acc ++ fr"AND v.salary_from >= $amount"
       case (acc, VacancyFilter.Actual(flag)) =>
         if (flag) acc ++ fr"AND v.expires_at > NOW()" else acc
+      case (acc, VacancyFilter.Company(companyId)) =>
+        acc ++ fr"AND v.organization_id = ${companyId}"
     }
 
     sql
@@ -87,7 +89,14 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
         case e @ Invalid(_) => IO.fail(e)
         case _              => IO.fail(Disaster)
       }
-  def deleteAll: Task[Int] = SQL.deleteAll.transact(tr)
+  override private[dao] def deleteAll: Task[Int] = SQL.deleteAll.transact(tr)
+
+  override private[dao] def approve(vacancyId: UUID) =
+    sql"UPDATE vacancies SET approved = true WHERE id = ${vacancyId}".update
+      .withGeneratedKeys("id")
+      .compile
+      .lastOrError
+      .transact(tr)
 
   private object SQL {
     def get(id: UUID): ConnectionIO[Option[Vacancy]] =

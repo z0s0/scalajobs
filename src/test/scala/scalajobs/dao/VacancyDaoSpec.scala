@@ -39,6 +39,9 @@ object VacancyDaoSpec extends DefaultRunnableSpec {
       link = "https://href.ru"
     )
 
+  private def createOrganization =
+    OrganizationDao.create(OrganizationDbParams("name", "desc"))
+
   def spec =
     suite("VacancyDaoSpec")(
       suite("list")(
@@ -49,20 +52,33 @@ object VacancyDaoSpec extends DefaultRunnableSpec {
         },
         testM("empty if vacancies unapproved") {
           for {
-            org <- OrganizationDao.create(OrganizationDbParams("name", "desc"))
+            org <- createOrganization
             _ <- VacancyDao.create(vacancyDbParamsByOrg(org.id))
             list <- VacancyDao.list(List[VacancyFilter]())
           } yield assert(list)(isEmpty)
         },
-//        testM("empty if all vacancies expired") { ??? },
-//        testM("returns vacancies within salary range provided") { ??? },
-//        testM("returns vacancies with techStack chosen") { ??? },
-//        testM("can filter vacancies by company") { ??? },
-//        testM("can filter vacancies by remote/office/flexible") { ??? },
-//        testM("can filter vacancies by full time/part time") { ??? }
+        testM("can filter vacancies by company") {
+          for {
+            org <- createOrganization
+            vacancy <- VacancyDao.create(vacancyDbParamsByOrg(org.id))
+            _ <- VacancyDao.approve(vacancy.id)
+            list <- VacancyDao.list(
+              List[VacancyFilter](VacancyFilter.Company(org.id))
+            )
+          } yield assert(list.length)(equalTo(1))
+        },
       ),
       suite("create")(
-//        testM("creates unapproved vacancy") { ??? },
+        testM("creates unapproved vacancy") {
+          for {
+            org <- createOrganization
+            vacancy <- VacancyDao.create(vacancyDbParamsByOrg(org.id))
+            listVacancies <- VacancyDao.list(List[VacancyFilter]())
+          } yield {
+            assert(vacancy.organization.id)(equalTo(org.id)) &&
+            assert(listVacancies)(isEmpty)
+          }
+        },
         testM("cannot create vacancy of wrong organization") {
           for {
             effect <- VacancyDao

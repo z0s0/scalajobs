@@ -6,7 +6,3 @@ import zio.test.mock.mockable
 
 @mockable[OrganizationDao.Service]
 object OrganizationServiceMock
-
-object OrganizationServiceSpec extends DefaultRunnableSpec {
-  def spec = ???
-}
