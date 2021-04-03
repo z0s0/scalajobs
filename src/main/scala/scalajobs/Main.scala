@@ -8,31 +8,22 @@ import org.http4s.HttpRoutes
 import org.http4s.syntax.kleisli._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.slf4j.LoggerFactory
-import scalajobs.api.{Docs, OrganizationsRoutes, TagsRoutes, VacanciesRoutes}
+import scalajobs.api.{Docs, Routes}
 import scalajobs.configuration.Configuration.AllConfigs
 import scalajobs.service.Layer.Services
-import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import zio.clock.Clock
 import sttp.tapir.swagger.http4s.SwaggerHttp4s
-import sttp.tapir.ztapir._
 import zio.interop.catz._
 
 object Main {
   type AppEnv = Clock with Services with AllConfigs
-  val vacanciesRoutes = VacanciesRoutes.routes.map(_.widen[AppEnv])
-  val organizationRoutes = OrganizationsRoutes.routes.map(_.widen[AppEnv])
-  val tagsRoutes = TagsRoutes.routes.map(_.widen[AppEnv])
-
-  val routes = ZHttp4sServerInterpreter
-    .from(vacanciesRoutes ++ organizationRoutes ++ tagsRoutes)
-    .toRoutes
 
   private val log = LoggerFactory.getLogger("RuntimeReporter")
 
   def main(args: Array[String]): Unit = {
     val program = for {
       apiConf <- ZIO.access[Has[ApiConfig]](_.get)
-      _ <- runHttp(routes, apiConf)
+      _ <- runHttp(Routes.routes, apiConf)
     } yield ()
 
     val runtime = zio.Runtime.default.withReportFailure { cause =>
