@@ -57,7 +57,7 @@ object VacancyDaoImpl {
 }
 final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
   override def list(filters: List[VacancyFilter]): Task[Vector[Vacancy]] = {
-    val baseSql = SQL.selectVacancySQL ++ fr"WHERE 1 = 1"
+    val baseSql = SQL.selectVacancySQL ++ fr"WHERE approved = true"
 
     val sql = filters.foldLeft(baseSql) {
       case (acc, VacancyFilter.SalaryTo(amount)) =>
