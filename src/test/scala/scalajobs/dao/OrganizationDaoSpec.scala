@@ -1,16 +1,14 @@
 import scalajobs.Migrations
 import scalajobs.configuration.DbConnection
 import scalajobs.dao.OrganizationDao
+import scalajobs.model.DbError.Conflict
 import scalajobs.model.dbParams.OrganizationDbParams
 import scalajobs.support.PostgreSQLContainerLayer
 import zio.blocking.Blocking
-import zio.{UIO, ZIO, ZLayer}
-import zio.test.magnolia.DeriveGen
+import zio.{ZIO, ZLayer}
 import zio.test.DefaultRunnableSpec
-
 import zio.test._
 import zio.test.Assertion._
-import zio.test.TestAspect.after
 
 object OrganizationDaoSpec extends DefaultRunnableSpec {
 
@@ -22,24 +20,41 @@ object OrganizationDaoSpec extends DefaultRunnableSpec {
       DbConnection.transactorLive >>>
       OrganizationDao.live
 
-  val organizationParams = DeriveGen[OrganizationDbParams]
-
   override def spec = {
     suite("OrganizationDao")(
       suite("list")(testM("returns list of organizations") {
-        checkM(Gen.vectorOfBounded(1, 10)(organizationParams)) { listParams =>
-          for {
-            _ <- ZIO.foreach_(listParams)(OrganizationDao.create)
-            res <- assertM(OrganizationDao.list.map(_.length))(
-              equalTo(listParams.length)
-            )
-          } yield res
-        }
-      }).@@(after(OrganizationDao.deleteAll)),
+        val params = List(
+          OrganizationDbParams("name1", "desc1"),
+          OrganizationDbParams("name2", "desc2")
+        )
+
+        for {
+          _ <- ZIO.foreach_(params)(OrganizationDao.create)
+          res <- assertM(OrganizationDao.list.map(_.length))(
+            equalTo(params.length)
+          )
+        } yield res
+      }),
       suite("create")(testM("creates new organization if name is free") {
-        assertM(UIO(12))(equalTo(12))
+        val params = OrganizationDbParams("freeName", "desc")
+
+        for {
+          id <- OrganizationDao.create(params).map(_.id)
+          organization <- OrganizationDao.get(id).map(_.get)
+        } yield {
+          assert(organization.name)(equalTo(params.name)) &&
+          assert(organization.description)(equalTo(params.description))
+        }
       }, testM("returns Conflict if name is occupied") {
-        assertM(UIO(12))(equalTo(12))
+        val params1 = OrganizationDbParams("name", "desc")
+        val paramsWithTakenName =
+          OrganizationDbParams(params1.name, "another desc")
+        val errorMsg = s"Organization with name ${params1.name} already exists"
+
+        for {
+          _ <- OrganizationDao.create(params1)
+          eff <- OrganizationDao.create(paramsWithTakenName).run
+        } yield assert(eff)(fails(equalTo(Conflict(errorMsg))))
       })
     ).provideCustomLayer(env.orDie)
   }

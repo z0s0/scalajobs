@@ -18,9 +18,10 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.implicits.javatime._
+import doobie.postgres.sqlstate
 import zio.interop.catz._
 import scalajobs.dao.impl.VacancyDaoImpl.VacancyRow
-import scalajobs.model.DbError.Disaster
+import scalajobs.model.DbError.{Disaster, Invalid}
 import scalajobs.model.dbParams.VacancyDbParams
 
 object VacancyDaoImpl {
@@ -40,11 +41,8 @@ object VacancyDaoImpl {
       Vacancy(
         id = id,
         description = description,
-        organization = Organization(
-          id = Some(organizationId),
-          organizationName,
-          organizationDesc
-        ),
+        organization =
+          Organization(id = organizationId, organizationName, organizationDesc),
         salaryFrom = salaryFrom,
         salaryTo = salaryTo,
         currency = Currency.fromString(currency),
@@ -66,6 +64,8 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
         acc ++ fr"AND v.salary_from >= $amount"
       case (acc, VacancyFilter.Actual(flag)) =>
         if (flag) acc ++ fr"AND v.expires_at > NOW()" else acc
+      case (acc, VacancyFilter.Company(companyId)) =>
+        acc ++ fr"AND v.organization_id = ${companyId}"
     }
 
     sql
@@ -80,11 +80,23 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
   override def create(params: VacancyDbParams): IO[DbError, Vacancy] =
     SQL
       .insert(params)
-      .flatMap(SQL.get)
       .transact(tr)
-      .foldM(_ => IO.fail(Disaster), vacOpt => IO.succeed(vacOpt.get))
+      .flatMap {
+        case Left(errorMsg) => IO.fail(Invalid(errorMsg))
+        case Right(id)      => SQL.get(id).map(_.get).transact(tr)
+      }
+      .catchAll {
+        case e @ Invalid(_) => IO.fail(e)
+        case _              => IO.fail(Disaster)
+      }
+  override private[dao] def deleteAll: Task[Int] = SQL.deleteAll.transact(tr)
 
-  def deleteAll: Task[Int] = SQL.deleteAll.transact(tr)
+  override private[dao] def approve(vacancyId: UUID) =
+    sql"UPDATE vacancies SET approved = true WHERE id = ${vacancyId}".update
+      .withGeneratedKeys("id")
+      .compile
+      .lastOrError
+      .transact(tr)
 
   private object SQL {
     def get(id: UUID): ConnectionIO[Option[Vacancy]] =
@@ -93,7 +105,7 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
         .map(_.toVacancy)
         .option
 
-    def insert(params: VacancyDbParams): ConnectionIO[UUID] =
+    def insert(params: VacancyDbParams): ConnectionIO[Either[String, UUID]] =
       sql"""
         INSERT INTO vacancies(
           description,
@@ -122,6 +134,10 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
         );  
       """.update
         .withGeneratedKeys[UUID]("id")
+        .attemptSomeSqlState {
+          case sqlstate.class23.FOREIGN_KEY_VIOLATION =>
+            "organization does not exist"
+        }
         .compile
         .lastOrError
 
