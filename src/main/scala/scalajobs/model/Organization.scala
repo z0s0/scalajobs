@@ -4,6 +4,6 @@ import java.util.UUID
 
 import io.circe.generic.JsonCodec
 
-@JsonCodec final case class Organization(id: Option[UUID],
+@JsonCodec final case class Organization(id: UUID,
                                          name: String,
                                          description: String)

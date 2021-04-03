@@ -40,11 +40,8 @@ object VacancyDaoImpl {
       Vacancy(
         id = id,
         description = description,
-        organization = Organization(
-          id = Some(organizationId),
-          organizationName,
-          organizationDesc
-        ),
+        organization =
+          Organization(id = organizationId, organizationName, organizationDesc),
         salaryFrom = salaryFrom,
         salaryTo = salaryTo,
         currency = Currency.fromString(currency),
@@ -82,7 +79,10 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
       .insert(params)
       .flatMap(SQL.get)
       .transact(tr)
-      .foldM(_ => IO.fail(Disaster), vacOpt => IO.succeed(vacOpt.get))
+      .foldM(e => {
+        println(e)
+        IO.fail(Disaster)
+      }, vacOpt => IO.succeed(vacOpt.get))
 
   def deleteAll: Task[Int] = SQL.deleteAll.transact(tr)
 

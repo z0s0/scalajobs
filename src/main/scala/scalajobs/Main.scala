@@ -2,7 +2,7 @@ package scalajobs
 
 import org.http4s.server.Router
 import scalajobs.configuration.ApiConfig
-import zio.{Has, RIO, ZIO}
+import zio.{Has, RIO, UIO, ZIO}
 import cats.implicits._
 import org.http4s.HttpRoutes
 import org.http4s.syntax.kleisli._

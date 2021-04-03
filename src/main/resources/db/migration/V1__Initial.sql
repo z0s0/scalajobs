@@ -4,6 +4,7 @@ create table organizations(
   id UUID NOT NULL DEFAULT uuid_generate_v4(),
   name text NOT NULL,
   description text,
+  UNIQUE(name),
 
   created_at TIMESTAMP NOT NULL,
   updated_at TIMESTAMP NOT NULL,

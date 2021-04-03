@@ -34,6 +34,7 @@ object VacancyDaoSpec extends DefaultRunnableSpec {
         testM("shows list of all vacancies unless filters provided") {
           checkM(Gen.vectorOfBounded(1, 10)(genVacancyDbParams)) { listParams =>
             val emptyFilters = List[VacancyFilter]()
+            println(listParams)
             for {
               _ <- ZIO.foreach_(listParams)(VacancyDao.create)
               res <- assertM(VacancyDao.list(emptyFilters).map(_.length))(

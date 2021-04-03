@@ -19,7 +19,7 @@ object OrganizationDaoImpl {
   final case class OrganizationRow(id: UUID,
                                    name: String,
                                    description: String) {
-    def toOrganization: Organization = Organization(Some(id), name, description)
+    def toOrganization: Organization = Organization(id, name, description)
   }
 }
 
@@ -41,13 +41,16 @@ final class OrganizationDaoImpl(tr: Transactor[Task])
         case Right(id) =>
           IO.succeed(
             Organization(
-              id = Some(id),
+              id = id,
               name = params.name,
               description = params.description
             )
           )
       }
-      .catchAll(_ => IO.fail(Disaster))
+      .catchAll {
+        case e @ Conflict(_) => IO.fail(e)
+        case _               => IO.fail(Disaster)
+      }
   }
 
   def deleteAll: Task[Int] = SQL.deleteAll.transact(tr)
