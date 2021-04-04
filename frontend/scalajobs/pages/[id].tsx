@@ -1,7 +1,25 @@
 import React from 'react'
-import { UUID } from '../src/types'
+import {getVacancy, listVacancies} from "../src/api"
 
-export default (id: UUID) => 
-  <div>
-      ID: {id}
-  </div>
+export default ({job}) => {
+  return(
+    <div>
+      {job.id}, {job.description}
+    </div>
+  )
+}
+
+export async function getStaticProps({params}) {
+  const res = await getVacancy(params.id)
+  const job = res.data
+  return {props: {job}}
+}
+
+export async function getStaticPaths() {
+  const jobs = await listVacancies()
+
+  return {
+    paths: jobs.data?.map(({ id }) => `/${id}`) ?? [],
+    fallback: false,
+  }
+}
