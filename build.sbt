@@ -11,3 +11,17 @@ addCompilerPlugin(
   "org.typelevel" %% "kind-projector" % "0.11.3" cross CrossVersion.full
 )
 Test / fork := true
+
+assemblyMergeStrategy in assembly := {
+  case PathList(
+      "META-INF",
+      "maven",
+      "org.webjars",
+      "swagger-ui",
+      "pom.properties"
+      ) =>
+    MergeStrategy.singleOrError
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    oldStrategy(x)
+}
