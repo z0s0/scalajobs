@@ -1,14 +1,13 @@
 package scalajobs.model.form
 
-import java.util.UUID
-
-import cats.data.Validated
-import io.circe.generic.JsonCodec
 import scalajobs.model.{Form, Helpers}
+import io.circe.generic.JsonCodec
+import cats.data.Validated
 import cats.syntax.semigroup._
 
 @JsonCodec
 final case class VacancyForm(description: Option[String],
+                             title: Option[String],
                              organizationId: Option[String],
                              salaryFrom: Option[Int],
                              salaryTo: Option[Int],

@@ -1,0 +1,77 @@
+
+header {
+    display: grid;
+    justify-content: center;
+    background: #1f1e27;
+    height: 7vh;
+}
+
+header .content {
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.input {
+    background: #181818;
+    border-color: hsl(0, 0%, 18.82%);
+    color: rgb(158, 158, 158)
+}
+
+.vacancyPage {
+    display: flex;
+    flex-direction: column;
+}
+
+.applyButton {
+    background: firebrick;
+    color: forestgreen;
+    min-width: 35px;
+    min-height: 25px;
+}
+
+.pageContainer {
+    margin: auto;
+    margin-top: 5vh;
+    border-radius: 0.4em;
+    box-shadow: rgba(26, 26, 26, 0.2) 0px 4px 6px, rgba(26, 26, 26, 0.1) 0px 5px 15px;
+    width: 50%;
+    border: 2px black solid;
+    padding: 2vh;
+}
+
+.contentContainer {
+    min-height: 88vh;
+    display: grid;
+    grid-template-areas: "vacancies filters";
+    justify-content: center;
+    
+}
+
+.filtersContainer {
+  grid-area: filters;
+  min-width: 200px;
+  min-height: 150px;
+}
+
+.vacanciesContainer {
+    grid-area: vacancies;
+}
+
+.vacancy {
+    display: grid;
+    min-height: 70px;
+    width: 70%;
+    border: #30363a solid 1px;
+}
+
+footer {
+    height: 5vh;
+    background: #1f1e27;
+}
+
+.post-job__container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}

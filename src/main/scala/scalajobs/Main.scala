@@ -2,10 +2,11 @@ package scalajobs
 
 import org.http4s.server.Router
 import scalajobs.configuration.ApiConfig
-import zio.{Has, RIO, UIO, ZIO}
+import zio.{Has, RIO, ZIO}
 import cats.implicits._
 import org.http4s.HttpRoutes
 import org.http4s.syntax.kleisli._
+import org.http4s.server.middleware.CORS
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.slf4j.LoggerFactory
 import scalajobs.api.{Docs, Routes}
@@ -19,6 +20,7 @@ object Main {
   type AppEnv = Clock with Services with AllConfigs
 
   private val log = LoggerFactory.getLogger("RuntimeReporter")
+  private val corsConfig = CORS.DefaultCORSConfig
 
   def main(args: Array[String]): Unit = {
     val program = for {
@@ -41,10 +43,11 @@ object Main {
 
     ZIO.runtime[R].flatMap { implicit rt =>
       val swagger = new SwaggerHttp4s(Docs.yaml).routes[Task]
+      val finalRoutes = CORS((routes <+> swagger), corsConfig)
 
       BlazeServerBuilder[Task]
         .bindHttp(apiConf.port, "localhost")
-        .withHttpApp(Router("/" -> (routes <+> swagger)).orNotFound)
+        .withHttpApp(Router("/" -> finalRoutes).orNotFound)
         .serve
         .compile[Task, Task, cats.effect.ExitCode]
         .drain

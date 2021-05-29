@@ -1,9 +1,13 @@
 
 export type UUID = string 
 
-interface TechStackTag {
+export interface TechStackTag {
   id: number,
   name: string
+}
+
+export interface Error {
+  reason: string
 }
 
 export interface Organization {
@@ -24,3 +28,5 @@ export interface Vacancy {
   contactEmail: string,
   link: string
 }
+
+export interface ApplicationMetainfo {}
