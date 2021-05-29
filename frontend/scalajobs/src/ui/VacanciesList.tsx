@@ -7,6 +7,6 @@ interface Props {
 }
 
 export default (props: Props) => 
-  <div>
+  <div className="vacanciesContainer">
       {(props.vacancies || []).map(vacancy => <Vacancy key={vacancy.id} vacancy={vacancy}/>)}
   </div>

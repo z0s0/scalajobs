@@ -1,7 +1,5 @@
 package scalajobs.api
 
-import java.util.UUID
-
 import scalajobs.model.ClientError.Invalid
 import scalajobs.service.VacancyService
 import zio.IO

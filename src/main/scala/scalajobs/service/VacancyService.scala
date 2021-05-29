@@ -1,6 +1,5 @@
 package scalajobs.service
 
-import java.time.LocalDateTime
 import java.util.UUID
 
 import scalajobs.dao.VacancyDao
