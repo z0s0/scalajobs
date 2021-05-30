@@ -1,14 +1,13 @@
 
 export type UUID = string 
+export type CreateOrganizationInput = Omit<Organization, "id">
 
 export interface TechStackTag {
   id: number,
   name: string
 }
 
-export interface Error {
-  reason: string
-}
+export interface Error {}
 
 export interface Organization {
   id: UUID,

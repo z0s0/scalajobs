@@ -6,7 +6,9 @@ interface Props {
     vacancies?: VacancyType[]
 }
 
-export default (props: Props) => 
+const Component = ({vacancies}: Props) => 
   <div className="vacanciesContainer">
-      {(props.vacancies || []).map(vacancy => <Vacancy key={vacancy.id} vacancy={vacancy}/>)}
+      {(vacancies || []).map(vacancy => <Vacancy key={vacancy.id} vacancy={vacancy}/>)}
   </div>
+
+export default Component  

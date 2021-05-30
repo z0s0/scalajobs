@@ -11,7 +11,7 @@ const IdPage = () => {
   const {id} = router.query
 
   const p = id as string
-  
+
   const [vacancy, setVacancy] = useState<Vacancy | null>(null)
 
   useEffect(() => {
@@ -25,7 +25,6 @@ const IdPage = () => {
       ID : {vacancy?.id}
       <p>{vacancy?.description}</p>
       <p>{vacancy?.contactEmail}</p>
-
 
       <ApplyButton href={vacancy?.link}/>
     </div>

@@ -43,7 +43,7 @@ object Main {
 
     ZIO.runtime[R].flatMap { implicit rt =>
       val swagger = new SwaggerHttp4s(Docs.yaml).routes[Task]
-      val finalRoutes = CORS((routes <+> swagger), corsConfig)
+      val finalRoutes = CORS(routes <+> swagger, corsConfig)
 
       BlazeServerBuilder[Task]
         .bindHttp(apiConf.port, "localhost")

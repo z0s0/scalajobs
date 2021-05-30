@@ -18,6 +18,9 @@ header .content {
     color: rgb(158, 158, 158)
 }
 
+.tags {
+    background: forestgreen;
+}
 .vacancyPage {
     display: flex;
     flex-direction: column;

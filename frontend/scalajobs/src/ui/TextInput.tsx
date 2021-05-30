@@ -2,13 +2,13 @@ import React from 'react'
 import Tooltip from './Tooltip'
 
 interface Props {
-    onChange: () => void,
+    onChange: (evt: React.ChangeEvent<HTMLInputElement>) => void,
     placeholder?: string, 
     tooltipText?: string,
     label?: string
 }
 
-export default ({tooltipText, placeholder, onChange, label}: Props): React.FunctionComponentElement<Props> =>
+const Input = ({tooltipText, placeholder, onChange, label}: Props): React.FunctionComponentElement<Props> =>
   <div>
     {tooltipText && <Tooltip text={tooltipText}/>}
     
@@ -21,4 +21,6 @@ export default ({tooltipText, placeholder, onChange, label}: Props): React.Funct
       placeholder={placeholder}
     />
   </div>
+
+export default Input  
   
