@@ -4,14 +4,14 @@ import TextInput from '../src/ui/TextInput'
 import NumberInput from '../src/ui/NumberInput'
 import TextArea from '../src/ui/TextArea'
 import SubmitButton from '../src/ui/SubmitButton'
-import { createOrganization } from '../src/api'
+import { createOrganization, listOrganizations, listTags } from '../src/api'
 
 const Component = () => {
 
     return (
         <>
           <section className="postJobDescription">
-               
+               Post your job here.
           </section>
 
           <Form onSubmit={() => console.log("Submitted")}/>
@@ -58,13 +58,18 @@ const Form = (props: FormProps): React.FunctionComponentElement<FormProps> => {
     const [inputsData, setInputsData] = useState<InputsData>()
 
     useEffect(() => {
+      Promise
+      .all([listTags(), listOrganizations()])
+      .then(responses =>
         setInputsData({
-            officePresenceTypes: officePresenceTypes,
-            currencies: ["USD", "RUB", "THB"],
-            tags: tags, 
-            organizations: [{id: "1", name: "Tinkoff", description: "Bank"}]
-        })
+          officePresenceTypes: officePresenceTypes,
+          currencies: ["USD", "RUB", "THB"],
+          tags: responses[0].data, 
+          organizations: responses[1].data
+      }))
     }, [])
+
+    console.log(inputsData)
 
     return(
         <div className="post-job__container">
@@ -137,13 +142,13 @@ const Form = (props: FormProps): React.FunctionComponentElement<FormProps> => {
                 ...input,
                 chosenTags: [
                   ...input.chosenTags,
-                  tags.find(t => t.id === newTagId)!
+                  inputsData?.tags.find(t => t.id === newTagId)!
                 ]
               })
             }}
 
           >
-            {tags.map(tag => 
+            {inputsData?.tags.map(tag => 
               <option value={tag.id} key={tag.id}>
                 {tag.name}
               </option>
@@ -161,15 +166,10 @@ const Form = (props: FormProps): React.FunctionComponentElement<FormProps> => {
 }
 
 const Tag = (tag: TechStackTag) =>
-  <div>
+  <div key={tag.id}>
     {tag.name}
     <p>X</p>
   </div>
-
-const tags: TechStackTag[] = [
-    {id: 1, name: "PostgreSQL"},
-    {id: 2, name: "ZIO"}
-]
 
 const CreateOrganizationForm = () => {
   const [input, setInput] = useState<CreateOrganizationInput>({name: "", description: ""})

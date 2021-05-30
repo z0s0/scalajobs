@@ -28,6 +28,7 @@ object VacancyDaoSpec extends DefaultRunnableSpec {
 
   def vacancyDbParamsByOrg(orgId: UUID) =
     VacancyDbParams(
+      title = "Senior Scala Developer",
       description = "some desc",
       salaryFrom = 10000,
       salaryTo = 40000,

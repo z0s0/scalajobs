@@ -3,7 +3,8 @@ package scalajobs.model.dbParams
 import java.time.LocalDateTime
 import java.util.UUID
 
-final case class VacancyDbParams(description: String,
+final case class VacancyDbParams(title: String,
+                                 description: String,
                                  salaryFrom: Int,
                                  salaryTo: Int,
                                  organizationId: UUID,

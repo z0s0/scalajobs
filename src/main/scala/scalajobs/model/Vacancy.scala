@@ -6,6 +6,7 @@ import io.circe.generic.JsonCodec
 
 @JsonCodec
 final case class Vacancy(id: UUID,
+                         title: String,
                          description: String,
                          organization: Organization,
                          salaryFrom: Int,

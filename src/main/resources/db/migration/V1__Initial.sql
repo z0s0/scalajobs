@@ -15,6 +15,7 @@ create table organizations(
 create table vacancies (
   id UUID NOT NULL DEFAULT uuid_generate_v4(),
   organization_id UUID NOT NULL REFERENCES organizations(id),
+  title TEXT NOT NULL,
   description TEXT NOT NULL,
   approved BOOLEAN NOT NULL DEFAULT FALSE,
   salary_from INTEGER NOT NULL,
