@@ -1,12 +1,17 @@
 import '../styles/globals.css'
 import '../styles/styles.css'
 import Link from 'next/link'
+import Head from 'next/head'
 
 import ToggleSwitch from '../src/ui/ToggleSwitch'
 
 function MyApp({ Component, pageProps }) {
   return (
     <>
+       <Head>
+        <title>Scalajobs</title>
+       </Head>
+
        <header>
         <div className="content">
           <div>

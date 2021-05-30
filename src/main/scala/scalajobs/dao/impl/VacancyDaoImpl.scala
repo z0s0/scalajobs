@@ -26,6 +26,7 @@ import scalajobs.model.dbParams.VacancyDbParams
 
 object VacancyDaoImpl {
   final case class VacancyRow(id: UUID,
+                              title: String,
                               description: String,
                               salaryFrom: Int,
                               salaryTo: Int,
@@ -40,6 +41,7 @@ object VacancyDaoImpl {
     def toVacancy: Vacancy =
       Vacancy(
         id = id,
+        title = title,
         description = description,
         organization =
           Organization(id = organizationId, organizationName, organizationDesc),
@@ -108,6 +110,7 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
     def insert(params: VacancyDbParams): ConnectionIO[Either[String, UUID]] =
       sql"""
         INSERT INTO vacancies(
+          title,
           description,
           salary_from,
           salary_to,
@@ -120,6 +123,7 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
           created_at,
           updated_at
         ) VALUES (
+          ${params.title},
           ${params.description},
           ${params.salaryFrom},
           ${params.salaryTo},
@@ -144,6 +148,7 @@ final class VacancyDaoImpl(tr: Transactor[Task]) extends VacancyDao.Service {
     def selectVacancySQL: Fragment =
       sql"""
          SELECT v.id,
+                v.title,
                 v.description,
                 v.salary_from,
                 v.salary_to,

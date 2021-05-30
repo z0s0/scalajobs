@@ -32,6 +32,7 @@ object VacancyService {
 
         override def create(form: VacancyForm): IO[ClientError, Vacancy] = {
           val dbParams = VacancyDbParams(
+            title = form.title.get,
             description = form.description.get,
             salaryFrom = form.salaryFrom.get,
             salaryTo = form.salaryTo.get,
