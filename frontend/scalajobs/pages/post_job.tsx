@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from 'react'
-import { UUID, TechStackTag, Organization, CreateOrganizationInput } from '../src/types'
+import React, {ChangeEvent, useEffect, useState} from 'react'
+import { UUID, TechStackTag, Organization, CreateOrganizationInput, Currency, OfficePresence, OfficePresenceTypes, Currencies } from '../src/types'
 import TextInput from '../src/ui/TextInput'
 import NumberInput from '../src/ui/NumberInput'
 import TextArea from '../src/ui/TextArea'
@@ -24,14 +24,14 @@ interface Input {
     organizationId: UUID,
     salaryFrom?: number,
     salaryTo?: number,
-    currency?: string,
-    officePresence?: string,
+    currency?: Currency,
+    officePresence?: OfficePresence,
     chosenTags: TechStackTag[]
 }
 
 interface InputsData {
-  officePresenceTypes: string[],
-  currencies: string[],
+  officePresenceTypes: typeof OfficePresenceTypes,
+  currencies: typeof Currencies,
   tags: TechStackTag[],
   organizations: Organization[]
 }
@@ -40,7 +40,6 @@ interface FormProps  {
     onSubmit: () => void
 }
 
-const officePresenceTypes = ["remote", "office", "flexible"]
 const defaultInput: Input = {
     organizationId: "-1",
     salaryFrom: 100,
@@ -62,8 +61,8 @@ const Form = (props: FormProps): React.FunctionComponentElement<FormProps> => {
       .all([listTags(), listOrganizations()])
       .then(responses =>
         setInputsData({
-          officePresenceTypes: officePresenceTypes,
-          currencies: ["USD", "RUB", "THB"],
+          officePresenceTypes: OfficePresenceTypes,
+          currencies: Currencies,
           tags: responses[0].data, 
           organizations: responses[1].data
       }))
@@ -132,6 +131,15 @@ const Form = (props: FormProps): React.FunctionComponentElement<FormProps> => {
             onChange={({target}) => setInput({...input, salaryTo: parseInt(target.value)})}
           />
 
+          <select
+            value={input.officePresence}
+            onChange={({target}) => setInput({...input, officePresence: target.value as OfficePresence})}
+          >
+            {OfficePresenceTypes.map(t =>
+              <option key={t} value={t} children={t}/>  
+            )}
+          </select>
+da
           <select 
             className="tags"
             value=""
