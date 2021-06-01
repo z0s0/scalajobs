@@ -2,14 +2,20 @@ import {useState, useEffect} from 'react'
 
 import VacanciesList from '../src/ui/VacanciesList'
 import {listVacancies} from '../src/api'
-import { Vacancy } from '../src/types'
+import { TechStackTag, Vacancy } from '../src/types'
 import Filters from '../src/ui/Filters'
 
 interface Props{
   vacancies: Vacancy[]
 }
 
-export default function Vacancies(props: Props) {
+interface FiltersInputs {
+  tags: TechStackTag[]
+}
+
+export default function Vacancies(props: ср) { 
+  const [filtersInputs, setFiltersInputs] = useState<FiltersInputs>({tags: []})
+
   const [vacancies, setVacancies] = useState<Vacancy[]>()
 
   useEffect(() => {
@@ -23,14 +29,4 @@ export default function Vacancies(props: Props) {
       <VacanciesList vacancies={vacancies}/>
     </>
   )
-}
-
-export async function getStaticProps() {
-  const res = await listVacancies()
-  
-  const vacancies: Vacancy[] = res.data
-
-  console.log(vacancies)
-
-  return {props: {vacancies}}
 }

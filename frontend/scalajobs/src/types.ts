@@ -1,6 +1,11 @@
 
 export type UUID = string 
 export type CreateOrganizationInput = Omit<Organization, "id">
+export type OfficePresence = typeof OfficePresenceTypes[number]
+export type Currency = typeof Currencies[number]
+
+export const OfficePresenceTypes = ['remote', 'flexible', 'office'] as const
+export const Currencies = ['USD', 'THB', 'EUR', 'RUB']
 
 export interface TechStackTag {
   id: number,
@@ -22,10 +27,9 @@ export interface Vacancy {
   salaryFrom: number,
   salaryTo: number,
   tags: TechStackTag[],
-  officePresence: string,
-  currency: string,
+  officePresence: OfficePresence,
+  currency: Currency,
   contactEmail: string,
   link: string
 }
 
-export interface ApplicationMetainfo {}
