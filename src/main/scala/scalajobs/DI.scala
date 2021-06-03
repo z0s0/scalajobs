@@ -12,6 +12,6 @@ object DI {
       Migrations.live >+>
       Migrations.afterMigrations >>>
       DbConnection.transactorLive >>>
-      (DAOLayer.live) >>>
+      DAOLayer.live >>>
       ServiceLayer.live ++ Configuration.allConfigs
 }

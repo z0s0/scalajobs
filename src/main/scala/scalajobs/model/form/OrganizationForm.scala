@@ -6,7 +6,8 @@ import scalajobs.model.Form
 
 @JsonCodec
 final case class OrganizationForm(name: Option[String],
-                                  description: Option[String])
+                                  description: Option[String],
+                                  captcha: Option[String])
     extends Form {
   override def validate =
     Validated
@@ -22,5 +23,11 @@ final case class OrganizationForm(name: Option[String],
             "",
             List("Description is not provided or too short")
           )
-      )
+      ).combine(
+        Validated.cond(
+          captcha.getOrElse("").length > 1,
+          "",
+          List("Captcha must be provided")
+        )
+    )
 }
