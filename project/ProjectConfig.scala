@@ -16,6 +16,7 @@ object ProjectConfig {
     val logback = "1.2.3"
     val slf4j = "1.7.30"
     val tapir = "0.17.14"
+    val sttp = "2.1.4"
   }
 
   val confDeps = Seq(
@@ -43,7 +44,6 @@ object ProjectConfig {
 
   val http4sDeps = Seq(
     "org.http4s" %% "http4s-blaze-server" % versions.http4s,
-    "org.http4s" %% "http4s-blaze-client" % versions.http4s,
     "org.http4s" %% "http4s-circe" % versions.http4s,
     "org.http4s" %% "http4s-dsl" % versions.http4s
   )
@@ -72,6 +72,11 @@ object ProjectConfig {
     "com.softwaremill.sttp.tapir" %% "tapir-openapi-circe-yaml" % versions.tapir
   )
 
+  val sttpDeps = List(
+    "com.softwaremill.sttp.client" %% "async-http-client-backend-zio" % versions.sttp,
+    "com.softwaremill.sttp.client" %% "circe" % versions.sttp
+  )
+
   val logDependencies = Seq(
     "ch.qos.logback" % "logback-classic" % versions.logback,
     "org.slf4j" % "slf4j-api" % versions.slf4j
@@ -85,5 +90,6 @@ object ProjectConfig {
       confDeps ++
       circeDeps ++
       logDependencies ++
-      tapirDeps
+      tapirDeps ++
+      sttpDeps
 }

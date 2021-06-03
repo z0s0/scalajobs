@@ -22,6 +22,7 @@ object Main {
   private val log = LoggerFactory.getLogger("RuntimeReporter")
   private val corsConfig = CORS.DefaultCORSConfig
 
+
   def main(args: Array[String]): Unit = {
     val program = for {
       apiConf <- ZIO.access[Has[ApiConfig]](_.get)

@@ -1,10 +1,12 @@
-import React, {ChangeEvent, useEffect, useState} from 'react'
+import React, {useEffect, useState} from 'react'
+import ReCAPTCHA from "react-google-recaptcha";
 import { UUID, TechStackTag, Organization, CreateOrganizationInput, Currency, OfficePresence, OfficePresenceTypes, Currencies } from '../src/types'
 import TextInput from '../src/ui/TextInput'
 import NumberInput from '../src/ui/NumberInput'
 import TextArea from '../src/ui/TextArea'
 import SubmitButton from '../src/ui/SubmitButton'
 import { createOrganization, listOrganizations, listTags } from '../src/api'
+import { RECAPTCHA_API_KEY } from '../src/constants'
 
 const Component = () => {
 
@@ -26,7 +28,8 @@ interface Input {
     salaryTo?: number,
     currency?: Currency,
     officePresence?: OfficePresence,
-    chosenTags: TechStackTag[]
+    chosenTags: TechStackTag[],
+    captcha: string
 }
 
 interface InputsData {
@@ -47,7 +50,8 @@ const defaultInput: Input = {
     currency: "USD",
     officePresence: "remote",
     description: "default input",
-    chosenTags: []
+    chosenTags: [],
+    captcha: ""
 }
 
 const Form = (props: FormProps): React.FunctionComponentElement<FormProps> => {
@@ -165,6 +169,11 @@ da
 
           {input.chosenTags?.map(tag => <Tag {...tag}/> )}
 
+          <ReCAPTCHA
+            sitekey={RECAPTCHA_API_KEY}
+            onChange={(captcha: string) => setInput({...input, captcha})}
+          />
+
           <button
            onClick={props.onSubmit} 
            children="Post"
@@ -180,7 +189,7 @@ const Tag = (tag: TechStackTag) =>
   </div>
 
 const CreateOrganizationForm = () => {
-  const [input, setInput] = useState<CreateOrganizationInput>({name: "", description: ""})
+  const [input, setInput] = useState<CreateOrganizationInput>({name: "", description: "", captcha: ""})
 
   return(
     <div>
@@ -192,6 +201,11 @@ const CreateOrganizationForm = () => {
       <TextInput
         placeholder="Describe what it does"
         onChange={({target}) => setInput({...input, description: target.value})}
+      />
+
+      <ReCAPTCHA
+        sitekey={RECAPTCHA_API_KEY}
+        onChange={(captcha: string) => setInput({...input, captcha})}
       />
 
       <SubmitButton

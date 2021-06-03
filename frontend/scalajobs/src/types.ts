@@ -1,6 +1,6 @@
 
 export type UUID = string 
-export type CreateOrganizationInput = Omit<Organization, "id">
+export type CreateOrganizationInput = Omit<Organization, "id"> & {captcha: string}
 export type OfficePresence = typeof OfficePresenceTypes[number]
 export type Currency = typeof Currencies[number]
 

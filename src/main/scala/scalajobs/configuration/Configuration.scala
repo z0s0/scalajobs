@@ -16,12 +16,13 @@ object Configuration {
 
   val noErrors: ULayer[Has[Config]] = live.orDie
 
-  type AllConfigs = Has[ApiConfig] with Has[DbConfig]
+  type AllConfigs = Has[ApiConfig] with Has[DbConfig] with Has[RecaptchaConfig]
 
   val allConfigs: ULayer[AllConfigs] =
     noErrors >>> (
       subConfig(_.dbConfig) ++
-        subConfig(_.apiConfig)
+        subConfig(_.apiConfig) ++
+        subConfig(_.recaptchaConfig)
     )
 
   def subConfig[T: Tag](f: Config => T): URLayer[Has[Config], Has[T]] =
