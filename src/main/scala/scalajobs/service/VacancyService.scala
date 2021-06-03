@@ -18,10 +18,8 @@ object VacancyService {
     def create(params: VacancyForm): IO[ClientError, Vacancy]
   }
 
-  type Dependencies = VacancyDao
-
-  val live: ZLayer[Dependencies, Nothing, VacancyService] =
-    ZLayer.fromFunction[Dependencies, VacancyService.Service] { ctx =>
+  val live: ZLayer[VacancyDao, Nothing, VacancyService] =
+    ZLayer.fromFunction[VacancyDao, VacancyService.Service] { ctx =>
       val dao = ctx.get[VacancyDao.Service]
 
       new Service {

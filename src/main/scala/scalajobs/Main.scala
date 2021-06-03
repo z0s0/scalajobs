@@ -15,16 +15,13 @@ import scalajobs.service.Layer.Services
 import zio.clock.Clock
 import sttp.tapir.swagger.http4s.SwaggerHttp4s
 import zio.interop.catz._
-import scala.concurrent.Future
 
 object Main {
-  case class User(name: String)
-
-
   type AppEnv = Clock with Services with AllConfigs
 
   private val log = LoggerFactory.getLogger("RuntimeReporter")
   private val corsConfig = CORS.DefaultCORSConfig
+
 
   def main(args: Array[String]): Unit = {
     val program = for {

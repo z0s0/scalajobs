@@ -15,7 +15,9 @@ final case class VacancyForm(description: Option[String],
                              officePresence: Option[String],
                              expiresAt: Option[String],
                              contactEmail: Option[String],
-                             link: Option[String])
+                             link: Option[String],
+                             captcha: Option[String]
+                            )
     extends Form {
   override def validate = {
     def emptyFieldError(fieldName: String) =
@@ -46,6 +48,10 @@ final case class VacancyForm(description: Option[String],
       Helpers.isValidDateTime(expiresAt.getOrElse("")),
       "",
       List("expiresAt must be present and conform ISO8601")
+    ) |+| Validated.cond(
+      captcha.getOrElse("").length > 1,
+      "",
+      List("Captcha must be provided")
     )
   }
 }

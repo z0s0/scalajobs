@@ -17,6 +17,7 @@ object VacancyDao {
     def list(filters: List[VacancyFilter]): Task[Vector[Vacancy]]
     def get(id: UUID): Task[Option[Vacancy]]
     def create(params: VacancyDbParams): IO[DbError, Vacancy]
+
     private[dao] def deleteAll: Task[Int]
     private[dao] def approve(vacancyId: UUID): Task[Unit]
   }

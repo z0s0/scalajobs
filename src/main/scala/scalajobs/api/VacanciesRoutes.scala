@@ -1,7 +1,8 @@
 package scalajobs.api
 
 import scalajobs.model.ClientError.Invalid
-import scalajobs.service.VacancyService
+import scalajobs.service.Layer.Services
+import scalajobs.service.{CaptchaValidator, VacancyService}
 import zio.IO
 import sttp.tapir.ztapir._
 
@@ -20,9 +21,24 @@ object VacanciesRoutes {
   val createVacancy = Docs.createVacancyDocs.zServerLogic { form =>
     form.validate.fold(
       errors => IO.fail(errors.map(Invalid)),
-      _ => VacancyService.create(form).mapError(List(_))
+      _ => {
+        val captchaError = List(Invalid("Cannot validate captcha"))
+
+        CaptchaValidator.isValid(form.captcha.get)
+          .catchAll(_ => IO.fail(captchaError))
+          .flatMap(captchaValid =>
+            if (captchaValid)
+              VacancyService.create(form).mapError(List(_))
+            else
+              IO.fail(captchaError)
+          )
+      }
     )
   }
 
-  val routes = List(listVacancies, getVacancy, createVacancy)
+  val routes = List(
+    listVacancies.widen[Services],
+    getVacancy.widen[Services],
+    createVacancy.widen[Services]
+  )
 }
