@@ -1,7 +1,7 @@
 import http from "k6/http"
 
 export let options = {
-  vus: 30,
+  vus: 200,
   stages: [
     {duration: "1m", target: 5},
     {duration: "30s", target: 10}
