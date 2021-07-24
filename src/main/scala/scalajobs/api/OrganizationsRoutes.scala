@@ -5,14 +5,23 @@ import scalajobs.model.dbParams.OrganizationDbParams
 import scalajobs.service.Layer.Services
 import scalajobs.service.{CaptchaValidator, OrganizationService}
 import sttp.tapir.ztapir._
-import zio.IO
+import zio.clock.Clock
+import zio.{Chunk, IO, UIO}
+import zio.zmx.metrics.{MetricAspect, MetricsSyntax}
 
 object OrganizationsRoutes {
-  val listOrganizations = Docs.organizationsDocs.zServerLogic { _ =>
-    OrganizationService.list.catchAll(_ => IO.fail(Disaster))
+  private val responseTimeBuckets = Chunk(50d, 100d, 200d, 500d, 1000d)
+  private val counter = MetricAspect.count("organization_routes_requests")
+  private val histogram = MetricAspect.observeHistogram("list_organizations_response_time", responseTimeBuckets)
+
+  private val listOrganizations = Docs.organizationsDocs.zServerLogic { _ =>
+    (for {
+      (duration, result) <- (OrganizationService.list @@ counter).timed
+      _ <- UIO(duration.toMillis.toDouble) @@ histogram
+    } yield result).catchAll(_ => IO.fail(Disaster))
   }
 
-  val createOrganization = Docs.createOrganization.zServerLogic { form =>
+  private val createOrganization = Docs.createOrganization.zServerLogic { form =>
     form.validate
       .fold(
         errors => IO.fail(errors.map(Invalid)),
@@ -31,7 +40,7 @@ object OrganizationsRoutes {
   }
 
   val routes = List(
-    listOrganizations.widen[Services],
-    createOrganization.widen[Services]
+    listOrganizations.widen[Services with Clock],
+    createOrganization.widen[Services with Clock]
   )
 }

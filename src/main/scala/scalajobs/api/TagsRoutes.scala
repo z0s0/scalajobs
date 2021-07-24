@@ -58,7 +58,7 @@ object TagsRoutes {
   private val secondaryTags = List(Tag(2000, "GraphQL"), Tag(2001, "gRPC"))
   private val tags = dbTags ++ qTags ++ scalaTags ++ infraTags ++ secondaryTags
 
-  val listTags = Docs.listTags.zServerLogic { _ => IO.succeed(tags) }
+  private val listTags = Docs.listTags.zServerLogic { _ => IO.succeed(tags) }
 
   val routes = List(listTags)
 }

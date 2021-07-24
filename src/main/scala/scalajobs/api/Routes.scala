@@ -6,11 +6,12 @@ import sttp.tapir.ztapir._
 import zio.interop.catz._
 
 object Routes {
-  val vacanciesRoutes = VacanciesRoutes.routes.map(_.widen[AppEnv])
-  val organizationRoutes = OrganizationsRoutes.routes.map(_.widen[AppEnv])
-  val tagsRoutes = TagsRoutes.routes.map(_.widen[AppEnv])
+  private val vacanciesRoutes = VacanciesRoutes.routes.map(_.widen[AppEnv])
+  private val organizationRoutes = OrganizationsRoutes.routes.map(_.widen[AppEnv])
+  private val tagsRoutes = TagsRoutes.routes.map(_.widen[AppEnv])
+  private val metricsRoutes = MetricsRoutes.routes.map(_.widen[AppEnv])
 
   val routes = ZHttp4sServerInterpreter
-    .from(vacanciesRoutes ++ organizationRoutes ++ tagsRoutes)
+    .from(vacanciesRoutes ++ organizationRoutes ++ tagsRoutes ++ metricsRoutes)
     .toRoutes
 }
