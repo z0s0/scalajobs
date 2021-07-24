@@ -6,13 +6,16 @@ import scalajobs.service.Layer.Services
 import scalajobs.service.{CaptchaValidator, OrganizationService}
 import sttp.tapir.ztapir._
 import zio.IO
+import zio.zmx.metrics.{MetricAspect, MetricsSyntax}
 
 object OrganizationsRoutes {
-  val listOrganizations = Docs.organizationsDocs.zServerLogic { _ =>
-    OrganizationService.list.catchAll(_ => IO.fail(Disaster))
+  private def counter = MetricAspect.count("organization_routes_requests")
+
+  private val listOrganizations = Docs.organizationsDocs.zServerLogic { _ =>
+    (OrganizationService.list @@ counter).catchAll(_ => IO.fail(Disaster))
   }
 
-  val createOrganization = Docs.createOrganization.zServerLogic { form =>
+  private val createOrganization = Docs.createOrganization.zServerLogic { form =>
     form.validate
       .fold(
         errors => IO.fail(errors.map(Invalid)),

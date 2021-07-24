@@ -15,13 +15,13 @@ import scalajobs.service.Layer.Services
 import zio.clock.Clock
 import sttp.tapir.swagger.http4s.SwaggerHttp4s
 import zio.interop.catz._
+import zio.zmx.prometheus.PrometheusClient
 
 object Main {
-  type AppEnv = Clock with Services with AllConfigs
+  type AppEnv = Clock with Services with AllConfigs with Has[PrometheusClient]
 
   private val log = LoggerFactory.getLogger("RuntimeReporter")
   private val corsConfig = CORS.DefaultCORSConfig
-
 
   def main(args: Array[String]): Unit = {
     val program = for {

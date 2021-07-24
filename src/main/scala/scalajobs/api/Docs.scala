@@ -58,6 +58,11 @@ object Docs {
       .in("tags")
       .out(jsonBody[List[Tag]])
 
+  val metrics =
+    endpoint.get
+      .in("metrics")
+      .out(stringBody)
+
   val docs =
     List(
       organizationsDocs,
@@ -66,7 +71,8 @@ object Docs {
       vacancyDocs,
       vacanciesDocs,
       createVacancyDocs,
-      listTags
+      listTags,
+      metrics
     )
 
   val yaml =
